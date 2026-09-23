@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -49,11 +49,52 @@ Return:
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
       contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: {
+              type: Type.STRING,
+            },
+            description: {
+              type: Type.STRING,
+            },
+            brand: {
+              type: Type.STRING,
+            },
+            category: {
+              type: Type.STRING,
+            },
+            suggested_price_min: {
+              type: Type.NUMBER,
+            },
+            suggested_price_max: {
+              type: Type.NUMBER,
+            },
+            needs_confirmation: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.STRING,
+              },
+            },
+          },
+          required: [
+            "title",
+            "description",
+            "brand",
+            "category",
+            "suggested_price_min",
+            "suggested_price_max",
+            "needs_confirmation",
+          ],
+        },
+      },
     });
 
-    return Response.json({
-      result: response.text,
-    });
+    const listing = JSON.parse(response.text || "{}");
+
+    return Response.json(listing);
     } catch (error: any) {
         console.error(error);
 
