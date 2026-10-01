@@ -12,6 +12,10 @@ export default function Home() {
           <a href="#about" className="hover:text-blue-600">
             About
           </a>
+
+          <a href="/login" className="hover:text-blue-600">
+            Log in
+          </a>
         </div>
       </nav>
 
