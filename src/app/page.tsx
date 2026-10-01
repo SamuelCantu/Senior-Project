@@ -29,9 +29,12 @@ export default function Home() {
           manage those listings across multiple marketplaces from one place.
         </p>
 
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700">
+        <a
+          href="/ai"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700"
+        >
           Get Started
-        </button>
+        </a>
       </section>
 
       <section
