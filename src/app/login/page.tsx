@@ -4,7 +4,8 @@
 // and any login error message.
 import { useState } from "react";
 
-// Link lets the user return to the homepage.
+// Link lets the user navigate to the homepage
+// or the registration page.
 import Link from "next/link";
 
 // Router lets us redirect the user after a successful login.
@@ -48,19 +49,17 @@ export default function LoginPage() {
       password,
     });
 
-    // If Supabase returns an error, show the real error message.
-    // This is useful while we are testing/debugging.
+    // If Supabase returns an error, display it.
     if (error) {
       console.error("Supabase login error:", error);
 
       setError(error.message);
-
       setLoading(false);
 
       return;
     }
 
-    // If login succeeds, send the user back to the homepage.
+    // If login succeeds, send the user to the homepage.
     router.push("/");
 
     // Refresh the page so Next.js knows the auth state changed.
@@ -70,7 +69,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gray-50 px-6 py-20 text-gray-900">
       <section className="mx-auto max-w-md">
-        
+
         {/* Project name */}
         <h1 className="mb-4 text-center text-3xl font-bold text-blue-600">
           ListNexus
@@ -88,23 +87,23 @@ export default function LoginPage() {
 
         {/* Login form */}
         <form onSubmit={handleLogin} className="space-y-5">
-          
+
           {/* Email field */}
           <div>
             <label
-              htmlFor="email"
               className="mb-2 block font-medium"
+              htmlFor="email"
             >
               Email
             </label>
 
             <input
+              className="w-full rounded-lg border px-4 py-3"
               id="email"
               type="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-lg border px-4 py-3"
               placeholder="you@example.com"
             />
           </div>
@@ -112,24 +111,24 @@ export default function LoginPage() {
           {/* Password field */}
           <div>
             <label
-              htmlFor="password"
               className="mb-2 block font-medium"
+              htmlFor="password"
             >
               Password
             </label>
 
             <input
+              className="w-full rounded-lg border px-4 py-3"
               id="password"
               type="password"
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-lg border px-4 py-3"
               placeholder="Enter your password"
             />
           </div>
 
-          {/* Displays the real Supabase error while testing */}
+          {/* Displays Supabase login errors */}
           {error && (
             <p className="text-sm text-red-600">
               {error}
@@ -138,22 +137,34 @@ export default function LoginPage() {
 
           {/* Login button */}
           <button
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
             {loading ? "Signing in..." : "Log in"}
           </button>
+
         </form>
 
-        {/* Link back to homepage */}
-        <div className="mt-6 text-center">
+        {/* Navigation links */}
+        <div className="mt-6 flex justify-between text-sm">
+
+          {/* Return to homepage */}
           <Link
             className="text-blue-600 hover:underline"
             href="/"
           >
             Back to home
           </Link>
+
+          {/* Go to registration page */}
+          <Link
+            className="text-blue-600 hover:underline"
+            href="/register"
+          >
+            Register
+          </Link>
+
         </div>
 
       </section>
