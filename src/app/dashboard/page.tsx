@@ -18,8 +18,11 @@ export default function DashboardPage() {
             <Link className="text-blue-700" href="/dashboard">
               Dashboard
             </Link>
+            <Link className="text-blue-700" href="/dashboard">
+              Settings
+            </Link>
             <Link className="text-gray-600 hover:text-blue-600" href="/login">
-              Log in
+              Log out
             </Link>
           </nav>
         </div>
@@ -28,6 +31,9 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <section className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
+            <div className="mb-2 text-3xl font-bold">
+              <span className="text-blue-600">Hello user,</span>
+            </div>
             <h1 className="text-3xl font-bold">ListNexus Station</h1>
             <p className="mt-2 text-gray-600">Keep track of your listings here!</p>
           </div>
