@@ -54,6 +54,10 @@ export default function LoginPage() {
             Back to home
           </Link>
 
+          <Link className="text-blue-600 hover:underline" href="/dashboard">
+            User Page Dev Access
+          </Link>
+
           {/* Register button! */}
           <Link className="text-blue-600 hover:underline" href="/register">
             Register
