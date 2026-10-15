@@ -6,14 +6,32 @@ const ai = new GoogleGenAI({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const formData = await request.formData();
 
-    const {
-      title,
-      description,
-      priceMin,
-      priceMax,
-    } = body;
+    const title = formData.get("title")?.toString() ?? "";
+    const description = formData.get("description")?.toString() ?? "";
+    const priceMin = formData.get("priceMin")?.toString() ?? "";
+    const priceMax = formData.get("priceMax")?.toString() ?? "";
+
+    const images = formData
+      .getAll("images")
+      .filter((item): item is File => item instanceof File);
+
+      // Validate required text fields
+      if (!title || !description || !priceMin || !priceMax) {
+        return Response.json(
+          { error: "Missing required listing information." },
+          { status: 400 }
+        );
+      }
+
+      // Validate number of uploaded images
+      if (images.length < 2 || images.length > 5) {
+        return Response.json(
+          { error: "Please upload between 2 and 5 product images." },
+          { status: 400 }
+        );
+      }
 
     const prompt = `
 You are the AI listing assistant for ListNexus.
@@ -25,14 +43,15 @@ electronics, collectibles, artwork, household items, and other products.
 
 Rules:
 - Do not invent product information.
-- Use only information provided by the seller or information that can reasonably
-  be inferred from the description.
-- If information is unknown or uncertain, include it in needs_confirmation.
-- Do not claim that an item is authentic unless that information has been verified.
+- Use seller-provided information and clearly visible information from the uploaded images.
+- If an image is unclear or an attribute cannot be confidently determined, include it in needs_confirmation instead of guessing.
+- Do not assume that a visible logo proves authenticity.
+- Do not claim that an item is authentic unless authenticity has been independently verified.
+- Do not hide visible damage, wear, discoloration, or other relevant condition information.
 - Do not change inventory status.
 - Do not claim that an item has been sold.
 - Do not publish, remove, or modify marketplace listings.
-- Do not override seller-provided information.
+- Do not override seller-provided information without flagging a possible conflict.
 - The seller must review all generated information before publication.
 - Keep suggested prices within the seller's provided price range.
 - Suggested attributes should be appropriate for the type of item being listed.
@@ -43,6 +62,7 @@ Seller information:
 Title: ${title}
 Description: ${description}
 Seller price range: $${priceMin} - $${priceMax}
+Analyze the seller information together with all uploaded product images.
 
 Generate:
 1. An improved title
@@ -50,13 +70,30 @@ Generate:
 3. A suggested category
 4. A suggested minimum price
 5. A suggested maximum price
-6. Relevant item attributes
+6. Relevant item attributes visible in or supported by the images and seller information
 7. Any information that requires seller confirmation
 `;
+    
+    // Convert uploaded images into base64 data that Gemini can analyze
+    const imageParts = await Promise.all(
+      images.map(async (image) => {
+        const imageBuffer = Buffer.from(await image.arrayBuffer());
+
+        return {
+          inlineData: {
+            data: imageBuffer.toString("base64"),
+            mimeType: image.type,
+          },
+        };
+      })
+    );
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
+      model: "gemini-3.6-flash",
+      contents: [ 
+        {text: prompt }, 
+        ...imageParts, 
+      ],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
