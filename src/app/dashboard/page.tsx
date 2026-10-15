@@ -32,7 +32,7 @@ export default function DashboardPage() {
         <section className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="mb-2 text-3xl font-bold">
-              <span className="text-blue-600">Hello user,</span>
+              <span className="text-blue-600">Hello User,</span>
             </div>
             <h1 className="text-3xl font-bold">ListNexus Station</h1>
             <p className="mt-2 text-gray-600">Keep track of your listings here!</p>
