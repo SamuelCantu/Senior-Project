@@ -2,16 +2,15 @@
 
 // React state lets us keep track of the form fields
 // and any login error message.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-// Link lets the user navigate to the homepage
-// or the registration page.
+// Link lets the user navigate to other pages.
 import Link from "next/link";
 
 // Router lets us redirect the user after a successful login.
 import { useRouter } from "next/navigation";
 
-// Imports the Supabase browser client we created.
+// Imports the Supabase browser client.
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -26,30 +25,27 @@ export default function LoginPage() {
   // Stores any error message returned by Supabase.
   const [error, setError] = useState("");
 
-  // Tracks whether the login request is currently running.
+  // Tracks whether login is currently processing.
   const [loading, setLoading] = useState(false);
 
-  // Runs when the user submits the login form.
+  // Runs when the login form is submitted.
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-    // Prevents the browser from refreshing the page.
+    // Prevent the browser from refreshing the page.
     event.preventDefault();
 
-    // Clear any previous error message.
     setError("");
-
-    // Disable the button while the login request is running.
     setLoading(true);
 
     // Create a connection to Supabase.
     const supabase = createClient();
 
-    // Ask Supabase to verify the user's email and password.
+    // Ask Supabase to verify the email and password.
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    // If Supabase returns an error, display it.
+    // Display an error if login fails.
     if (error) {
       console.error("Supabase login error:", error);
 
@@ -59,10 +55,8 @@ export default function LoginPage() {
       return;
     }
 
-    // If login succeeds, send the user to the homepage.
+    // Send the user back to the homepage after login.
     router.push("/");
-
-    // Refresh the page so Next.js knows the auth state changed.
     router.refresh();
   }
 
@@ -75,12 +69,12 @@ export default function LoginPage() {
           ListNexus
         </h1>
 
-        {/* Login page title */}
+        {/* Login heading */}
         <h2 className="mb-3 text-center text-2xl font-semibold">
           Log in
         </h2>
 
-        {/* Short description */}
+        {/* Page description */}
         <p className="mb-8 text-center text-gray-600">
           Sign in to manage your listings and inventory.
         </p>
@@ -128,7 +122,7 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Displays Supabase login errors */}
+          {/* Supabase error message */}
           {error && (
             <p className="text-sm text-red-600">
               {error}
@@ -147,7 +141,7 @@ export default function LoginPage() {
         </form>
 
         {/* Navigation links */}
-        <div className="mt-6 flex justify-between text-sm">
+        <div className="mt-6 flex flex-col gap-3 text-center text-sm">
 
           {/* Return to homepage */}
           <Link
@@ -157,20 +151,19 @@ export default function LoginPage() {
             Back to home
           </Link>
 
-<<<<<<< HEAD
-          {/* Go to registration page */}
+          {/* Temporary dashboard link for development */}
+          <Link
+            className="text-blue-600 hover:underline"
+            href="/dashboard"
+          >
+            User Page Dev Access
+          </Link>
+
+          {/* Registration page */}
           <Link
             className="text-blue-600 hover:underline"
             href="/register"
           >
-=======
-          <Link className="text-blue-600 hover:underline" href="/dashboard">
-            User Page Dev Access
-          </Link>
-
-          {/* Register button! */}
-          <Link className="text-blue-600 hover:underline" href="/register">
->>>>>>> origin/main
             Register
           </Link>
 
