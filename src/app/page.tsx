@@ -1,3 +1,5 @@
+import AuthNav from "@/components/AuthNav";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
@@ -13,9 +15,8 @@ export default function Home() {
             About
           </a>
 
-          <a href="/login" className="hover:text-blue-600">
-            Log in
-          </a>
+          {/* Will display log in or log out */}
+          <AuthNav />
         </div>
       </nav>
 

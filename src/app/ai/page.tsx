@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 /*
  * =====================================================
@@ -124,6 +125,8 @@ type EbayPublishedListing = {
  */
 
 export default function GenerateListingPage() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   /*
    * =====================================================
    * CENTRAL PRODUCT STATE
@@ -390,6 +393,31 @@ export default function GenerateListingPage() {
 
     setEbayPublishedListing(null);
   }
+
+  /*
+  * =====================================================
+  * AUTH CHECK
+  * =====================================================
+  */
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
 
   /*
    * =====================================================
@@ -1713,6 +1741,14 @@ export default function GenerateListingPage() {
    * RENDER
    * =====================================================
    */
+  
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">

@@ -1,4 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import AuthNav from "@/components/AuthNav";
+import { useRouter } from "next/navigation";
 
 const overview = [
   { label: "Active listings", value: "0" },
@@ -7,6 +13,67 @@ const overview = [
 ];
 
 export default function DashboardPage() {
+  const [displayName, setDisplayName] = useState("");
+  const [nameInput, setNameInput] = useState("");
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) { 
+        router.push("/login");
+        return;
+      }
+      const savedName = 
+        user.user_metadata?.display_name ?? 
+        user.user_metadata?.full_name??
+        "";
+
+      setDisplayName(savedName);
+      setNameInput(savedName);
+      setCheckingAuth(false);
+    }
+
+    loadUser();
+  }, []);
+
+  async function handleSaveName() {
+    const trimmedName = nameInput.trim();
+
+    if (!trimmedName) {
+      return;
+    }
+
+    const supabase = createClient();
+
+    const { error } = await supabase.auth.updateUser({
+      data: {
+        display_name: trimmedName,
+      },
+    });
+
+    if (error) {
+      console.error("Failed to update display name:", error);
+      return;
+    }
+
+    setDisplayName(trimmedName);
+  }
+
+  if(checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b bg-white">
@@ -15,15 +82,12 @@ export default function DashboardPage() {
             ListNexus
           </Link>
           <nav className="flex items-center gap-5 text-sm font-medium">
-            <Link className="text-blue-700" href="/dashboard">
-              Dashboard
-            </Link>
+            
             <Link className="text-blue-700" href="/dashboard">
               Settings
             </Link>
-            <Link className="text-gray-600 hover:text-blue-600" href="/login">
-              Log out
-            </Link>
+            
+            <AuthNav />
           </nav>
         </div>
       </header>
@@ -32,10 +96,35 @@ export default function DashboardPage() {
         <section className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="mb-2 text-3xl font-bold">
-              <span className="text-blue-600">Hello User,</span>
+              <span className="text-blue-600">
+                Hello {displayName || "User"},
+              </span>
             </div>
             <h1 className="text-3xl font-bold">ListNexus Station</h1>
             <p className="mt-2 text-gray-600">Keep track of your listings here!</p>
+            <div className="mt-5 max-w-sm">
+              <label
+                htmlFor="displayName"
+                className="mb-2 block text-sm font-medium text-gray-700"> Display Name </label>
+
+              <div className="flex gap-2">
+                <input
+                  id="displayName"
+                  type="text"
+                  value={nameInput}
+                  onChange={(event) => setNameInput(event.target.value)}
+                  className="flex-1 rounded-lg border px-4 py-2"
+                  placeholder="Enter your name"
+                />
+
+                <button
+                  type="button"
+                  onClick={handleSaveName}
+                  className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+                  Save
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
