@@ -1,41 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 export default function EbaySuccessPage() {
-  const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    async function checkAuth() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      setCheckingAuth(false);
-    }
-
-    checkAuth();
-  }, [router]);
-
-  if (checkingAuth) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </main>
-    );
-  }
-  
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-lg text-center">

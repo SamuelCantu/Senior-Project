@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState, useEffect } from "react";
+import { ChangeEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
@@ -12,26 +12,6 @@ type SelectedImage = {
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    async function checkAuth() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      setCheckingAuth(false);
-    }
-
-    checkAuth();
-  }, [router]);
 
   /*
    * =====================================================
@@ -562,14 +542,6 @@ export default function NewProductPage() {
     } finally {
       setSaving(false);
     }
-  }
-
-  if (checkingAuth) {
-    return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
-      </main>
-    );
   }
 
   /*
