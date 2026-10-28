@@ -1323,7 +1323,7 @@ export default function GenerateListingPage() {
     try {
       const response =
         await fetch(
-          "/api/ebay/prepare",
+          "/api/ebay/production/prepare",
           {
             method: "POST",
 
@@ -1402,7 +1402,7 @@ export default function GenerateListingPage() {
     try {
       const response =
         await fetch(
-          "/api/ebay/prepare",
+          "/api/ebay/production/prepare",
           {
             method: "POST",
 
@@ -1530,10 +1530,10 @@ export default function GenerateListingPage() {
 
   /*
    * =====================================================
-   * PUBLISH TO EBAY SANDBOX
+   * PUBLISH TO EBAY PRODUCTION
    * =====================================================
    *
-   * THIS ACTUALLY CREATES THE EBAY SANDBOX LISTING.
+   * THIS ACTUALLY CREATES THE EBAY PRODUCTION LISTING.
    */
 
   async function handlePublishToEbay() {
@@ -1597,14 +1597,14 @@ export default function GenerateListingPage() {
      */
     const confirmed =
       window.confirm(
-        "Publish this listing to eBay Sandbox?\n\n" +
-          "This WILL create an active SANDBOX listing.\n\n" +
+        "Publish this listing to eBay Production?\n\n" +
+          "This WILL create an active PRODUCTION listing.\n\n" +
           `Title: ${result.title}\n` +
           `Price: $${Number(
             result.price
           ).toFixed(2)}\n` +
           `Quantity: ${ebayPreparation.product.quantity}\n\n` +
-          "This will NOT publish to production eBay."
+          "This is a REAL listing that can be seen and purchased by buyers."
       );
 
     if (!confirmed) {
@@ -1619,7 +1619,7 @@ export default function GenerateListingPage() {
     try {
       const response =
         await fetch(
-          "/api/ebay/publish",
+          "/api/ebay/production/publish",
           {
             method: "POST",
 
@@ -1653,7 +1653,7 @@ export default function GenerateListingPage() {
       if (!response.ok) {
         throw new Error(
           data.error ||
-            "ListNexus could not publish the listing to eBay Sandbox."
+            "ListNexus could not publish the listing to eBay Production."
         );
       }
 
@@ -1680,11 +1680,11 @@ export default function GenerateListingPage() {
 
       if (data.warning) {
         setMessage(
-          `eBay Sandbox listing published, but ListNexus reported a warning: ${data.warning}`
+          `eBay Production listing published, but ListNexus reported a warning: ${data.warning}`
         );
       } else {
         setMessage(
-          "Listing published successfully to eBay Sandbox!"
+          "Listing published successfully to eBay Production!"
         );
       }
     } catch (
@@ -1698,7 +1698,7 @@ export default function GenerateListingPage() {
         );
       } else {
         setError(
-          "Something went wrong while publishing to eBay Sandbox."
+          "Something went wrong while publishing to eBay Production."
         );
       }
     } finally {
@@ -2484,7 +2484,7 @@ export default function GenerateListingPage() {
 
                       <div className="mt-4">
                         <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-blue-700">
-                          eBay Sandbox connected
+                          eBay Production connected
                         </span>
                       </div>
                     </div>
@@ -2504,7 +2504,7 @@ export default function GenerateListingPage() {
                     >
                       {preparingEbay
                         ? "Checking eBay Requirements..."
-                        : "Prepare for eBay Sandbox"}
+                        : "Prepare for eBay Production"}
                     </button>
 
                     <p className="text-center text-xs text-gray-500">
@@ -2520,7 +2520,7 @@ export default function GenerateListingPage() {
                       <div className="space-y-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900">
-                            eBay Sandbox Preview
+                            eBay Production Preview
                           </h3>
 
                           <p className="mt-1 text-sm text-gray-600">
@@ -3013,7 +3013,7 @@ export default function GenerateListingPage() {
                                 The button below will
                                 create an active
                                 listing in eBay
-                                Sandbox. It will not
+                                Production. It will not
                                 publish anything to
                                 production eBay.
                               </p>
@@ -3032,8 +3032,8 @@ export default function GenerateListingPage() {
                               className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400"
                             >
                               {publishingEbay
-                                ? "Publishing to eBay Sandbox..."
-                                : "Publish to eBay Sandbox"}
+                                ? "Publishing to eBay Production..."
+                                : "Publish to eBay Production"}
                             </button>
                           </div>
                         ) : (
@@ -3042,7 +3042,7 @@ export default function GenerateListingPage() {
                           <div className="rounded-lg border border-green-300 bg-green-50 p-5">
                             <h3 className="text-lg font-semibold text-green-900">
                               Published to eBay
-                              Sandbox
+                              Production
                             </h3>
 
                             <div className="mt-3 space-y-2 text-sm text-green-900">
@@ -3074,7 +3074,7 @@ export default function GenerateListingPage() {
                                 rel="noreferrer"
                                 className="mt-4 inline-block rounded-lg bg-green-700 px-5 py-2 font-semibold text-white hover:bg-green-800"
                               >
-                                View eBay Sandbox
+                                View eBay Production
                                 Listing
                               </a>
                             )}
@@ -3092,3 +3092,4 @@ export default function GenerateListingPage() {
     </main>
   );
 }
+
