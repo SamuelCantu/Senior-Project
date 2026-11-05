@@ -6,18 +6,20 @@ import { createClient } from "@/lib/supabase/client";
 import AuthNav from "@/components/AuthNav";
 import { useRouter } from "next/navigation";
 
-const overview = [
-  { label: "Active listings", value: "0" },
-  { label: "Drafts", value: "0" },
-  { label: "Inventory items", value: "0" },
-];
 
 export default function DashboardPage() {
   const [displayName, setDisplayName] = useState("");
-  const [nameInput, setNameInput] = useState("");
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
-
+  //For dashboard overview stats
+  const [activeListings, setActiveListings] = useState(0);
+  const [drafts, setDrafts] = useState(0);
+  const [inventoryItems, setInventoryItems] = useState(0);
+  const overview = [
+    { label: "Active listings", value: activeListings.toString() },
+    { label: "Drafts", value: drafts.toString() },
+    { label: "Inventory items", value: inventoryItems.toString() },
+  ];    
   useEffect(() => {
     const supabase = createClient();
 
@@ -30,41 +32,86 @@ export default function DashboardPage() {
         router.push("/login");
         return;
       }
+      // Fetch counts for products and drafts
+      const [
+        { count: productCount, error: productCountError },
+        { count: draftCount, error: draftCountError },
+      ] = await Promise.all([
+        supabase
+          .from("products")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+
+        supabase
+          .from("listing_drafts")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+      ]);
+
+      if (productCountError) {
+        console.error("Could not count inventory items:", productCountError);
+      }
+
+      if (draftCountError) {
+        console.error("Could not count listing drafts:", draftCountError);
+      }
+
+      setInventoryItems(productCount ?? 0);
+      setDrafts(draftCount ?? 0);
+
+      const {
+        data: userProducts,
+        error: userProductsError,
+      } = await supabase
+        .from("products")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (userProductsError) {
+        console.error(
+          "Could not load products for active listing count:",
+          userProductsError
+        );
+      } else {
+        const productIds = (userProducts ?? []).map(
+          (product) => product.id
+        );
+
+        if (productIds.length > 0) {
+          const {
+            count: activeCount,
+            error: activeCountError,
+          } = await supabase
+            .from("marketplace_listings")
+            .select("*", { count: "exact", head: true })
+            .in("product_id", productIds)
+            .eq("status", "ACTIVE");
+
+          if (activeCountError) {
+            console.error(
+              "Could not count active listings:",
+              activeCountError
+            );
+          } else {
+            setActiveListings(activeCount ?? 0);
+          }
+        } else {
+          setActiveListings(0);
+        }
+      }
+
       const savedName = 
         user.user_metadata?.display_name ?? 
         user.user_metadata?.full_name??
         "";
 
       setDisplayName(savedName);
-      setNameInput(savedName);
       setCheckingAuth(false);
     }
 
     loadUser();
   }, []);
 
-  async function handleSaveName() {
-    const trimmedName = nameInput.trim();
-
-    if (!trimmedName) {
-      return;
-    }
-
-    const supabase = createClient();
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        display_name: trimmedName,
-      },
-    });
-
-    if (error) {
-      console.error("Failed to update display name:", error);
-      return;
-    }
-
-    setDisplayName(trimmedName);
-  }
 
   if(checkingAuth) {
     return (
@@ -83,11 +130,11 @@ export default function DashboardPage() {
           </Link>
           <nav className="flex items-center gap-5 text-sm font-medium">
             
-            <Link className="text-blue-700" href="/dashboard">
+            <Link className="text-blue-700" href="/settings">
               Settings
             </Link>
             
-            <AuthNav />
+            <AuthNav showDashboard={false} />
           </nav>
         </div>
       </header>
@@ -102,29 +149,6 @@ export default function DashboardPage() {
             </div>
             <h1 className="text-3xl font-bold">ListNexus Station</h1>
             <p className="mt-2 text-gray-600">Keep track of your listings here!</p>
-            <div className="mt-5 max-w-sm">
-              <label
-                htmlFor="displayName"
-                className="mb-2 block text-sm font-medium text-gray-700"> Display Name </label>
-
-              <div className="flex gap-2">
-                <input
-                  id="displayName"
-                  type="text"
-                  value={nameInput}
-                  onChange={(event) => setNameInput(event.target.value)}
-                  className="flex-1 rounded-lg border px-4 py-2"
-                  placeholder="Enter your name"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleSaveName}
-                  className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
-                  Save
-                </button>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -138,7 +162,7 @@ export default function DashboardPage() {
                 </p>
                 <Link
                   className="mt-8 inline-block text-blue-600 underline decoration-blue-600 underline-offset-4"
-                  href="/ai"
+                  href="/products/new"
                 >
                   Create your first listing
                 </Link>
@@ -161,7 +185,7 @@ export default function DashboardPage() {
 
         <div className="mt-8">
           <Link
-            href="/ai"
+            href="/products/new"
             className="flex h-[72px] items-center justify-center rounded-lg bg-blue-600 text-lg font-semibold text-white hover:bg-blue-700"
           >
             Create a listing

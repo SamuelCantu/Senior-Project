@@ -5,7 +5,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function AuthNav() {
+type AuthNavProps = {
+  showDashboard?: boolean;
+};
+
+export default function AuthNav({
+  showDashboard = true,
+}: AuthNavProps) {
   const router = useRouter();
   const [loggedIn, setLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -51,9 +57,11 @@ export default function AuthNav() {
   if (loggedIn) {
     return (
       <div className="flex items-center gap-6">
-        <Link href="/dashboard" className="hover:text-blue-600">
-          Dashboard
-        </Link>
+        {showDashboard && (
+          <Link href="/dashboard" className="hover:text-blue-600">
+            Dashboard
+          </Link>
+        )}
 
         <button
           type="button"
