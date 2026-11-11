@@ -2,8 +2,8 @@ import AuthNav from "@/components/AuthNav";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <nav className="flex items-center justify-between px-10 py-6 bg-white shadow-sm">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <nav className="flex items-center justify-between px-10 py-6 bg-white shadow-sm dark:bg-gray-900">
         <h1 className="text-2xl font-bold text-blue-600">ListNexus</h1>
 
         <div className="flex gap-6 text-sm font-medium">
@@ -29,7 +29,7 @@ export default function Home() {
           List Once. Sell Everywhere.
         </h2>
 
-        <p className="max-w-2xl text-lg text-gray-600 mb-8">
+        <p className="max-w-2xl text-lg text-gray-600 mb-8 dark:text-gray-400">
           ListNexus helps online sellers create product listings with AI and
           manage those listings across multiple marketplaces from one place.
         </p>
@@ -44,47 +44,47 @@ export default function Home() {
 
       <section
         id="features"
-        className="bg-white px-10 py-20"
+        className="bg-white px-10 py-20 dark:bg-gray-900"
       >
         <h2 className="text-3xl font-bold text-center mb-12">
           What ListNexus Does
         </h2>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <div className="border rounded-xl p-6 text-center">
+          <div className="border rounded-xl p-6 text-center dark:border-gray-700 dark:bg-gray-950">
             <div className="text-4xl mb-4">🤖</div>
 
             <h3 className="text-xl font-semibold mb-3">
               AI-Assisted Listings
             </h3>
 
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Use AI to help generate product titles, descriptions, categories,
               and listing information.
             </p>
           </div>
 
-          <div className="border rounded-xl p-6 text-center">
+          <div className="border rounded-xl p-6 text-center dark:border-gray-700 dark:bg-gray-950">
             <div className="text-4xl mb-4">🌐</div>
 
             <h3 className="text-xl font-semibold mb-3">
               Multiple Marketplaces
             </h3>
 
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Create one listing and publish it to multiple supported selling
               platforms.
             </p>
           </div>
 
-          <div className="border rounded-xl p-6 text-center">
+          <div className="border rounded-xl p-6 text-center dark:border-gray-700 dark:bg-gray-950">
             <div className="text-4xl mb-4">📦</div>
 
             <h3 className="text-xl font-semibold mb-3">
               Centralized Inventory
             </h3>
 
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Keep track of products and marketplace listings from one
               centralized system.
             </p>
@@ -100,14 +100,14 @@ export default function Home() {
           One Product. One Listing.
         </h2>
 
-        <p className="max-w-2xl mx-auto text-gray-600">
+        <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
           Our goal is to reduce the repetitive work involved in selling online
           while helping sellers keep their marketplace listings and inventory
           organized.
         </p>
       </section>
 
-      <footer className="bg-gray-900 text-gray-400 text-center py-8">
+      <footer className="bg-gray-900 text-gray-400 text-center py-8 dark:bg-black">
         <p>ListNexus</p>
         <p className="text-sm mt-2">
           CSCI 4390 Senior Project

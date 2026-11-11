@@ -115,15 +115,15 @@ export default function DashboardPage() {
 
   if(checkingAuth) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b bg-white">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <header className="border-b bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link className="text-xl font-bold text-blue-600" href="/">
             ListNexus
@@ -148,16 +148,20 @@ export default function DashboardPage() {
               </span>
             </div>
             <h1 className="text-3xl font-bold">ListNexus Station</h1>
-            <p className="mt-2 text-gray-600">Keep track of your listings here!</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Keep track of your listings here!
+            </p>
           </div>
         </section>
 
         <div className="flex gap-8">
-          <section className="flex-1 rounded-[14px] border border-[#2e2e2e] bg-[#f5f5f5] p-4">
+          <section className="flex-1 rounded-[14px] border border-[#2e2e2e] bg-[#f5f5f5] p-4 dark:border-gray-700 dark:bg-gray-900">
             <div className="flex min-h-[420px] items-center justify-center text-center">
               <div>
-                <h2 className="text-[2.1rem] font-semibold text-black">No listings yet</h2>
-                <p className="mt-6 text-[1.15rem] italic text-gray-500">
+                <h2 className="text-[2.1rem] font-semibold text-black dark:text-gray-100">
+                  No listings yet
+                </h2>
+                <p className="mt-6 text-[1.15rem] italic text-gray-500 dark:text-gray-400">
                   Start with a product and create your first marketplace listing.
                 </p>
                 <Link
@@ -174,9 +178,9 @@ export default function DashboardPage() {
             {overview.map((item) => (
               <div
                 key={item.label}
-                className="rounded-[14px] border border-[#2e2e2e] bg-[#f8f8f8] p-5"
+                className="rounded-[14px] border border-[#2e2e2e] bg-[#f8f8f8] p-5 dark:border-gray-700 dark:bg-gray-900"
               >
-                <p className="text-sm text-gray-600">{item.label}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{item.label}</p>
                 <p className="mt-2 text-3xl font-semibold">{item.value}</p>
               </div>
             ))}

@@ -566,8 +566,8 @@ export default function NewProductPage() {
 
   if (checkingAuth) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </main>
     );
   }
@@ -579,10 +579,10 @@ export default function NewProductPage() {
    */
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {/* NAVIGATION */}
 
-      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm">
+      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm dark:bg-gray-900">
         <a
           href="/"
           className="text-2xl font-bold text-blue-600"
@@ -619,14 +619,14 @@ export default function NewProductPage() {
             Add New Product
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-gray-600">
+          <p className="mx-auto mt-4 max-w-2xl text-gray-600 dark:text-gray-400 ">
             Add a product to ListNexus, upload its
             photos, and then generate an AI-assisted
             marketplace listing.
           </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-8 shadow-sm">
+        <div className="rounded-xl border bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="space-y-6">
             {/* TITLE */}
 
@@ -651,7 +651,7 @@ export default function NewProductPage() {
                   )
                 }
                 placeholder="Example: Bulbasaur Pokémon Card"
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -678,10 +678,10 @@ export default function NewProductPage() {
                   )
                 }
                 placeholder="Example: PKM-BULB-001"
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 This becomes the centralized identifier
                 used when syncing the product to
                 marketplaces.
@@ -708,7 +708,7 @@ export default function NewProductPage() {
                   )
                 }
                 placeholder="Example: Trading Cards"
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -732,10 +732,10 @@ export default function NewProductPage() {
                 }
                 placeholder="Anything you already know about the item..."
                 rows={4}
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 These notes give AI additional context.
                 They are not automatically treated as
                 the final marketplace description.
@@ -773,7 +773,7 @@ export default function NewProductPage() {
                       )
                     }
                     placeholder="9.99"
-                    className="w-full rounded-lg border py-3 pl-8 pr-4"
+                    className="w-full rounded-lg border py-3 pl-8 pr-4 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -800,7 +800,7 @@ export default function NewProductPage() {
                       event.target.value
                     )
                   }
-                  className="w-full rounded-lg border px-4 py-3"
+                  className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>
@@ -815,7 +815,7 @@ export default function NewProductPage() {
                 </span>
               </label>
 
-              <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+              <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center dark:border-gray-600 dark:bg-gray-800">
                 <input
                   id="product-images"
                   type="file"
@@ -835,11 +835,11 @@ export default function NewProductPage() {
                   Take or Upload Photos
                 </label>
 
-                <p className="mt-3 text-sm text-gray-500">
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                   JPG, PNG, or WebP. Up to 8 images.
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   The first image becomes the primary
                   marketplace image.
                 </p>
@@ -865,7 +865,7 @@ export default function NewProductPage() {
                         key={
                           `${image.file.name}-${index}`
                         }
-                        className="overflow-hidden rounded-lg border"
+                        className="overflow-hidden rounded-lg border dark:border-gray-800"
                       >
                         <img
                           src={
@@ -874,11 +874,11 @@ export default function NewProductPage() {
                           alt={`Selected product image ${
                             index + 1
                           }`}
-                          className="h-44 w-full object-contain bg-gray-50"
+                          className="h-44 w-full object-contain bg-gray-50 dark:bg-gray-950"
                         />
 
                         <div className="p-3">
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                             {
                               image.file.name
                             }
@@ -916,7 +916,7 @@ export default function NewProductPage() {
             {/* ERROR */}
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
                 {error}
               </div>
             )}
@@ -924,7 +924,7 @@ export default function NewProductPage() {
             {/* SUCCESS */}
 
             {message && (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
                 {message}
               </div>
             )}

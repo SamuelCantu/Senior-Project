@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [message, setMessage] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -42,6 +43,18 @@ export default function SettingsPage() {
     loadUser();
   }, [router]);
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+
+    if (savedTheme === "dark") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
   async function handleSaveName() {
     const trimmedName = nameInput.trim();
 
@@ -67,6 +80,18 @@ export default function SettingsPage() {
     setMessage("Display name updated.");
   }
 
+  function handleDarkMode(enabled: boolean) {
+    setDarkMode(enabled);
+
+    if (enabled) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }
+
   if (checkingAuth) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -76,8 +101,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b bg-white">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <header className="border-b bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <Link className="text-xl font-bold text-blue-600" href="/">
             ListNexus
@@ -92,11 +117,11 @@ export default function SettingsPage() {
       <div className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="text-3xl font-bold">Settings</h1>
 
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Manage your ListNexus account settings.
         </p>
 
-        <section className="mt-8 rounded-xl border bg-white p-6 shadow-sm">
+        <section className="mt-8 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-xl font-semibold">Profile</h2>
 
           <div className="mt-6">
@@ -135,7 +160,7 @@ export default function SettingsPage() {
               type="email"
               value={email}
               readOnly
-              className="w-full rounded-lg border bg-gray-100 px-4 py-2 text-gray-600"
+              className="w-full rounded-lg border bg-gray-100 px-4 py-2 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300"
             />
           </div>
 
@@ -146,7 +171,7 @@ export default function SettingsPage() {
           )}
         </section>
 
-        <section className="mt-6 rounded-xl border bg-white p-6 shadow-sm">
+        <section className="mt-6 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-xl font-semibold">Security</h2>
 
           <Link
@@ -155,6 +180,33 @@ export default function SettingsPage() {
           >
             Change Password
           </Link>
+        </section>
+
+        <section className="mt-6 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <h2 className="text-xl font-semibold dark:text-gray-100">
+            Appearance
+          </h2>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <p className="font-medium dark:text-gray-100">
+                Dark Mode
+              </p>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Use a darker theme for ListNexus.
+              </p>
+            </div>
+
+            <input
+              type="checkbox"
+              checked={darkMode}
+              onChange={(event) =>
+                handleDarkMode(event.target.checked)
+              }
+              className="h-5 w-5"
+            />
+          </div>
         </section>
       </div>
     </main>
