@@ -233,13 +233,6 @@ export default function NewProductPage() {
       return;
     }
 
-    if (!sku.trim()) {
-      setError(
-        "Please enter a SKU."
-      );
-
-      return;
-    }
 
     const numericPrice =
       Number(price);
@@ -312,6 +305,13 @@ export default function NewProductPage() {
           "You must be logged into ListNexus to add a product."
         );
       }
+      
+      const finalSku =
+        sku.trim() ||
+        `LN-${crypto.randomUUID()
+          .replaceAll("-", "")
+          .slice(0, 12)
+          .toUpperCase()}`;
 
       /*
        * =================================================
@@ -341,7 +341,7 @@ export default function NewProductPage() {
             null,
 
           sku:
-            sku.trim(),
+            finalSku,
 
           price:
             numericPrice,
@@ -624,6 +624,10 @@ export default function NewProductPage() {
             photos, and then generate an AI-assisted
             marketplace listing.
           </p>
+
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-red-600">*</span> Required field
+          </p>
         </div>
 
         <div className="rounded-xl border bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -660,9 +664,6 @@ export default function NewProductPage() {
             <div>
               <label className="mb-2 block font-semibold">
                 SKU
-                <span className="ml-1 text-red-600">
-                  *
-                </span>
               </label>
 
               <input
@@ -677,14 +678,13 @@ export default function NewProductPage() {
                     event.target.value
                   )
                 }
-                placeholder="Example: PKM-BULB-001"
+                placeholder="Optional: PKM-BULB-001"
                 className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
 
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                This becomes the centralized identifier
-                used when syncing the product to
-                marketplaces.
+                Optional. If left blank, ListNexus will create a unique SKU
+                automatically for inventory and marketplace syncing.
               </p>
             </div>
 
@@ -730,7 +730,7 @@ export default function NewProductPage() {
                     event.target.value
                   )
                 }
-                placeholder="Anything you already know about the item..."
+                placeholder="Description; Anything you already know about the item..."
                 rows={4}
                 className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
@@ -816,24 +816,41 @@ export default function NewProductPage() {
               </label>
 
               <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center dark:border-gray-600 dark:bg-gray-800">
-                <input
-                  id="product-images"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  capture="environment"
-                  multiple
-                  onChange={
-                    handleImageSelection
-                  }
-                  className="hidden"
-                />
+                <div className="flex flex-wrap justify-center gap-3">
+                  {/* Take Photo */}
+                  <input
+                    id="take-photo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="environment"
+                    onChange={handleImageSelection}
+                    className="hidden"
+                  />
 
-                <label
-                  htmlFor="product-images"
-                  className="inline-block cursor-pointer rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
-                >
-                  Take or Upload Photos
-                </label>
+                  <label
+                    htmlFor="take-photo"
+                    className="inline-block cursor-pointer rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+                  >
+                    Take Photo
+                  </label>
+
+                  {/* Upload Photos */}
+                  <input
+                    id="upload-photos"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImageSelection}
+                    className="hidden"
+                  />
+
+                  <label
+                    htmlFor="upload-photos"
+                    className="inline-block cursor-pointer rounded-lg bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500"
+                  >
+                    Upload Photos
+                  </label>
+                </div>
 
                 <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                   JPG, PNG, or WebP. Up to 8 images.

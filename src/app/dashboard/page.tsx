@@ -95,8 +95,6 @@ export default function DashboardPage() {
           } else {
             setActiveListings(activeCount ?? 0);
           }
-        } else {
-          setActiveListings(0);
         }
       }
 

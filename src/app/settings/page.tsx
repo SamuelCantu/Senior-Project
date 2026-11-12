@@ -94,8 +94,8 @@ export default function SettingsPage() {
 
   if (checkingAuth) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600">Loading...</p>
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
       </main>
     );
   }
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                 type="text"
                 value={nameInput}
                 onChange={(event) => setNameInput(event.target.value)}
-                className="flex-1 rounded-lg border px-4 py-2"
+                className="flex-1 rounded-lg border px-4 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
               />
 
               <button
@@ -165,14 +165,67 @@ export default function SettingsPage() {
           </div>
 
           {message && (
-            <p className="mt-4 text-sm text-green-700">
+            <p className="mt-4 text-sm text-green-700 dark:text-green-300">
               {message}
             </p>
           )}
         </section>
 
         <section className="mt-6 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+          <h2 className="text-xl font-semibold">
+            Connected Marketplaces
+          </h2>
+
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Connect marketplace accounts to publish and manage listings through ListNexus.
+          </p>
+
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-4 dark:border-gray-700">
+              <div>
+                <p className="font-semibold">
+                  eBay
+                </p>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Account connection is managed through eBay authorization.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled
+                className="rounded-lg bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                Connection setup in progress
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border p-4 dark:border-gray-700">
+              <div>
+                <p className="font-semibold">
+                  Bonanza
+                </p>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Marketplace integration is being developed.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
+                Coming Soon
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <h2 className="text-xl font-semibold">Security</h2>
+          
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            ListNexus uses secure authentication and does not store marketplace
+            passwords. Marketplace accounts are connected through authorized
+            account access.
+          </p>
 
           <Link
             href="/login/forgot-password"
