@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import BonanzaPreview from "./BonanzaPreview";
+import BonanzaPreparation from "./BonanzaPreparation";
+import BonanzaLiveControls from "./BonanzaLiveControls";
 
 /*
  * =====================================================
@@ -2479,7 +2482,7 @@ export default function GenerateListingPage() {
                       <p className="mt-2 text-sm text-blue-800">
                         The seller-reviewed listing
                         is approved and can now be
-                        prepared for eBay.
+                        prepared for supported marketplaces.
                       </p>
 
                       <div className="mt-4">
@@ -2488,6 +2491,24 @@ export default function GenerateListingPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* BONANZA PREVIEW: local only, never publishes */}
+                    <BonanzaPreview
+                      draft={result}
+                      product={selectedProduct}
+                      images={selectedImages}
+                    />
+
+                    {/* BONANZA PREPARATION: read-only API check */}
+                    <BonanzaPreparation
+                      key={result.id}
+                      draftId={result.id}
+                    />
+
+                    <BonanzaLiveControls
+                      key={`live-${result.id}`}
+                      draftId={result.id}
+                    />
 
                     {/* PREPARE */}
 
@@ -3010,12 +3031,11 @@ export default function GenerateListingPage() {
                               </h4>
 
                               <p className="mt-2 text-sm text-red-800">
-                                The button below will
-                                create an active
-                                listing in eBay
-                                Production. It will not
-                                publish anything to
-                                production eBay.
+                                The button below sends
+                                a real publishing request
+                                to eBay Production. If
+                                successful, buyers may
+                                see and purchase the listing.
                               </p>
                             </div>
 
@@ -3092,4 +3112,3 @@ export default function GenerateListingPage() {
     </main>
   );
 }
-

@@ -704,22 +704,6 @@ export async function POST(
       }
     }
 
-    if (
-      Object.keys(
-        ebayAspects
-      ).length === 0
-    ) {
-      return Response.json(
-        {
-          error:
-            "Please complete the required eBay item specifics before publishing.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
     /*
      * =================================================
      * STEP 8
@@ -1394,16 +1378,16 @@ export async function POST(
       condition:
         inventoryCondition,
 
+
       product: {
         title,
-
         description,
-
-        aspects:
-          ebayAspects,
-
+        ...(Object.keys(ebayAspects).length > 0
+          ? { aspects: ebayAspects }
+          : {}),
         imageUrls,
       },
+
     };
 
     /*
