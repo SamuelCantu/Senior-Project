@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import BonanzaPreview from "./BonanzaPreview";
 import BonanzaPreparation from "./BonanzaPreparation";
 import BonanzaLiveControls from "./BonanzaLiveControls";
+import { useRouter } from "next/navigation";
 
 /*
  * =====================================================
@@ -127,6 +128,8 @@ type EbayPublishedListing = {
  */
 
 export default function GenerateListingPage() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   /*
    * =====================================================
    * CENTRAL PRODUCT STATE
@@ -393,6 +396,31 @@ export default function GenerateListingPage() {
 
     setEbayPublishedListing(null);
   }
+
+  /*
+  * =====================================================
+  * AUTH CHECK
+  * =====================================================
+  */
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
 
   /*
    * =====================================================
@@ -1717,11 +1745,19 @@ export default function GenerateListingPage() {
    * =====================================================
    */
 
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center ">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {/* NAVIGATION */}
 
-      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm">
+      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm dark:bg-gray-900">
         <a
           href="/"
           className="text-2xl font-bold text-blue-600"
@@ -1758,7 +1794,7 @@ export default function GenerateListingPage() {
             Generate a Product Listing
           </h1>
 
-          <p className="mx-auto max-w-2xl text-gray-600">
+          <p className="mx-auto max-w-2xl text-gray-600 dark:text-gray-400">
             Select a product already stored in
             ListNexus. AI will analyze the
             centralized product information and
@@ -1773,13 +1809,13 @@ export default function GenerateListingPage() {
               LEFT SIDE
               ================================================= */}
 
-          <div className="rounded-xl border bg-white p-6 shadow-sm">
+          <div className="rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <h2 className="mb-6 text-2xl font-semibold">
               ListNexus Product
             </h2>
 
             {loadingProducts && (
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 Loading your products...
               </p>
             )}
@@ -1787,7 +1823,7 @@ export default function GenerateListingPage() {
             {!loadingProducts &&
               products.length ===
                 0 && (
-                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-yellow-900">
+                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
                   No products were found in your
                   ListNexus inventory.
                 </div>
@@ -1816,7 +1852,7 @@ export default function GenerateListingPage() {
                             .value
                         )
                       }
-                      className="w-full rounded-lg border px-4 py-3"
+                      className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                     >
                       {products.map(
                         (product) => (
@@ -1845,7 +1881,7 @@ export default function GenerateListingPage() {
                     <>
                       {/* CENTRAL PRODUCT DATA */}
 
-                      <div className="mb-6 rounded-lg bg-gray-50 p-4">
+                      <div className="mb-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                         <h3 className="mb-3 text-lg font-semibold">
                           Central Product Data
                         </h3>
@@ -1905,7 +1941,7 @@ export default function GenerateListingPage() {
                                       .value
                                   )
                                 }
-                                className="w-28 rounded-lg border px-3 py-2"
+                                className="w-28 rounded-lg border px-3 py-2 ark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
                               />
 
                               <button
@@ -1916,7 +1952,7 @@ export default function GenerateListingPage() {
                                 disabled={
                                   savingQuantity
                                 }
-                                className="rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-gray-800 disabled:bg-gray-400"
+                                className="rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-gray-800 disabled:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600"
                               >
                                 {savingQuantity
                                   ? "Saving..."
@@ -1924,7 +1960,7 @@ export default function GenerateListingPage() {
                               </button>
                             </div>
 
-                            <p className="mt-2 text-xs text-gray-500">
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                               This is the centralized
                               inventory quantity used
                               by all marketplaces.
@@ -1955,7 +1991,7 @@ export default function GenerateListingPage() {
                               Seller Notes
                             </p>
 
-                            <p className="mt-1 text-sm text-gray-600">
+                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                               {
                                 selectedProduct.description
                               }
@@ -1983,7 +2019,7 @@ export default function GenerateListingPage() {
                                   key={
                                     image.id
                                   }
-                                  className="overflow-hidden rounded-lg border bg-gray-50"
+                                  className="overflow-hidden rounded-lg border bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
                                 >
                                   <img
                                     src={
@@ -1996,7 +2032,7 @@ export default function GenerateListingPage() {
                                     className="h-48 w-full object-contain"
                                   />
 
-                                  <div className="p-2 text-center text-xs text-gray-500">
+                                  <div className="p-2 text-center text-xs text-gray-500 dark:text-gray-400">
                                     {image.is_primary
                                       ? "Primary image"
                                       : `Image ${
@@ -2020,7 +2056,7 @@ export default function GenerateListingPage() {
                             )}
                           </div>
                         ) : (
-                          <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+                          <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
                             This product has no stored
                             images yet.
                           </div>
@@ -2062,7 +2098,7 @@ export default function GenerateListingPage() {
                   {/* ERROR */}
 
                   {error && (
-                    <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
+                    <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
                       {error}
                     </p>
                   )}
@@ -2070,7 +2106,7 @@ export default function GenerateListingPage() {
                   {/* MESSAGE */}
 
                   {message && (
-                    <p className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700">
+                    <p className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
                       {message}
                     </p>
                   )}
@@ -2082,14 +2118,14 @@ export default function GenerateListingPage() {
               RIGHT SIDE
               ================================================= */}
 
-          <div className="rounded-xl border bg-white p-6 shadow-sm">
+          <div className="rounded-xl border bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <h2 className="mb-6 text-2xl font-semibold">
               AI Listing Draft
             </h2>
 
             {!result &&
               !generating && (
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   Select a ListNexus product and click
                   Generate AI Listing. A saved draft
                   will automatically reappear here.
@@ -2097,7 +2133,7 @@ export default function GenerateListingPage() {
               )}
 
             {generating && (
-              <div className="rounded-lg bg-blue-50 p-4 text-blue-800">
+              <div className="rounded-lg bg-blue-50 p-4 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
                 AI is analyzing the centralized
                 product information and stored
                 images...
@@ -2126,7 +2162,7 @@ export default function GenerateListingPage() {
                 {/* TITLE */}
 
                 <div>
-                  <label className="mb-2 block font-semibold text-gray-700">
+                  <label className="mb-2 block font-semibold text-gray-700 dark:text-gray-200">
                     Listing Title
                   </label>
 
@@ -2144,14 +2180,14 @@ export default function GenerateListingPage() {
                           .value
                       )
                     }
-                    className="w-full rounded-lg border px-4 py-2"
+                    className="w-full rounded-lg border px-4 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                   />
                 </div>
 
                 {/* DESCRIPTION */}
 
                 <div>
-                  <label className="mb-2 block font-semibold text-gray-700">
+                  <label className="mb-2 block font-semibold text-gray-700 dark:text-gray-200">
                     Listing Description
                   </label>
 
@@ -2168,7 +2204,7 @@ export default function GenerateListingPage() {
                           .value
                       )
                     }
-                    className="w-full rounded-lg border px-4 py-2"
+                    className="w-full rounded-lg border px-4 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                     rows={7}
                   />
                 </div>
@@ -2176,7 +2212,7 @@ export default function GenerateListingPage() {
                 {/* CATEGORY */}
 
                 <div>
-                  <label className="mb-2 block font-semibold text-gray-700">
+                  <label className="mb-2 block font-semibold text-gray-700 dark:text-gray-200">
                     Category
                   </label>
 
@@ -2194,14 +2230,14 @@ export default function GenerateListingPage() {
                           .value
                       )
                     }
-                    className="w-full rounded-lg border px-4 py-2"
+                    className="w-full rounded-lg border px-4 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                   />
                 </div>
 
                 {/* CONDITION */}
 
                 <div>
-                  <label className="mb-2 block font-semibold text-gray-700">
+                  <label className="mb-2 block font-semibold text-gray-700 dark:text-gray-200">
                     Condition
                   </label>
 
@@ -2219,19 +2255,19 @@ export default function GenerateListingPage() {
                           .value
                       )
                     }
-                    className="w-full rounded-lg border px-4 py-2"
+                    className="w-full rounded-lg border px-4 py-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                   />
                 </div>
 
                 {/* PRICE */}
 
                 <div>
-                  <label className="mb-2 block font-semibold text-gray-700">
+                  <label className="mb-2 block font-semibold text-gray-700 dark:text-gray-200">
                     Listing Price
                   </label>
 
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
                       $
                     </span>
 
@@ -2274,7 +2310,7 @@ export default function GenerateListingPage() {
 
                 <div>
                   <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-700">
+                    <h3 className="font-semibold text-gray-700 dark:text-gray-200">
                       Product Attributes
                     </h3>
 
@@ -2359,7 +2395,7 @@ export default function GenerateListingPage() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       AI did not generate any
                       attributes.
                     </p>
@@ -2369,7 +2405,7 @@ export default function GenerateListingPage() {
                 {/* CONFIRMATION */}
 
                 <div>
-                  <h3 className="mb-2 font-semibold text-gray-700">
+                  <h3 className="mb-2 font-semibold text-gray-700 dark:text-gray-200">
                     Needs Confirmation
                   </h3>
 
@@ -2386,7 +2422,7 @@ export default function GenerateListingPage() {
                               key={
                                 index
                               }
-                              className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-900"
+                              className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
                             >
                               <span className="font-semibold">
                                 Please verify:
@@ -2425,7 +2461,7 @@ export default function GenerateListingPage() {
                       </label>
                     </>
                   ) : (
-                    <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+                    <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
                       No additional information needs
                       confirmation.
                     </div>
@@ -2434,12 +2470,12 @@ export default function GenerateListingPage() {
 
                 {/* SELLER CONTROL */}
 
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                  <h3 className="font-semibold text-gray-800">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                     Seller Review Required
                   </h3>
 
-                  <p className="mt-2 text-sm text-gray-600">
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                     AI output is only a suggestion.
                     You have final control over the
                     title, description, category,
@@ -2474,7 +2510,7 @@ export default function GenerateListingPage() {
                 {result.status ===
                   "APPROVED" && (
                   <div className="space-y-4">
-                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
                       <h3 className="font-semibold text-blue-900">
                         Ready for Marketplaces
                       </h3>
@@ -2528,7 +2564,7 @@ export default function GenerateListingPage() {
                         : "Prepare for eBay Production"}
                     </button>
 
-                    <p className="text-center text-xs text-gray-500">
+                    <p className="text-center text-xs text-gray-500 dark:text-gray-400">
                       Preparing does not publish the
                       listing.
                     </p>
@@ -2538,13 +2574,13 @@ export default function GenerateListingPage() {
                         ================================================= */}
 
                     {ebayPreparation && (
-                      <div className="space-y-6 rounded-lg border border-gray-200 bg-gray-50 p-5">
+                      <div className="space-y-6 rounded-lg border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-800">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             eBay Production Preview
                           </h3>
 
-                          <p className="mt-1 text-sm text-gray-600">
+                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                             Review all eBay-specific
                             settings before
                             publishing.
@@ -2554,7 +2590,7 @@ export default function GenerateListingPage() {
                         {/* CATEGORY */}
 
                         <div>
-                          <label className="mb-2 block font-semibold text-gray-800">
+                          <label className="mb-2 block font-semibold text-gray-800 dark:text-gray-200">
                             eBay Category
                           </label>
 
@@ -2575,7 +2611,7 @@ export default function GenerateListingPage() {
                               preparingEbay ||
                               publishingEbay
                             }
-                            className="w-full rounded-lg border bg-white px-4 py-3"
+                            className="w-full rounded-lg border bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
                           >
                             {ebayPreparation.ebay.categoryAlternatives.map(
                               (
@@ -2602,7 +2638,7 @@ export default function GenerateListingPage() {
                             )}
                           </select>
 
-                          <p className="mt-2 text-xs text-gray-500">
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                             eBay suggested this
                             category, but the seller
                             has final control.
@@ -2612,7 +2648,7 @@ export default function GenerateListingPage() {
                         {/* QUANTITY */}
 
                         <div>
-                          <h4 className="font-semibold text-gray-800">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                             Quantity to Send
                           </h4>
 
@@ -2622,7 +2658,7 @@ export default function GenerateListingPage() {
                             }
                           </p>
 
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             This comes directly from
                             centralized
                             products.quantity.
@@ -2632,7 +2668,7 @@ export default function GenerateListingPage() {
                         {/* PRICE */}
 
                         <div>
-                          <h4 className="font-semibold text-gray-800">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                             Approved Listing Price
                           </h4>
 
@@ -2649,7 +2685,7 @@ export default function GenerateListingPage() {
                         {/* ITEM SPECIFICS */}
 
                         <div>
-                          <h4 className="mb-3 font-semibold text-gray-800">
+                          <h4 className="mb-3 font-semibold text-gray-800 dark:text-gray-200">
                             Required eBay Item
                             Specifics
                           </h4>
@@ -2665,7 +2701,7 @@ export default function GenerateListingPage() {
                                     key={
                                       aspect.name
                                     }
-                                    className="rounded-lg border bg-white p-4"
+                                    className="rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                                   >
                                     <label className="mb-2 block font-semibold">
                                       {
@@ -2759,7 +2795,7 @@ export default function GenerateListingPage() {
                               )}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               eBay did not report any
                               required item specifics
                               for this category.
@@ -2770,7 +2806,7 @@ export default function GenerateListingPage() {
                         {/* CONDITION */}
 
                         <div>
-                          <label className="mb-2 block font-semibold text-gray-800">
+                          <label className="mb-2 block font-semibold text-gray-800 dark:text-gray-200">
                             eBay Condition
                           </label>
 
@@ -2790,7 +2826,7 @@ export default function GenerateListingPage() {
                             disabled={
                               publishingEbay
                             }
-                            className="w-full rounded-lg border bg-white px-4 py-3"
+                            className="w-full rounded-lg border bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
                           >
                             <option value="">
                               Select condition...
@@ -2817,7 +2853,7 @@ export default function GenerateListingPage() {
                           </select>
 
                           {selectedEbayCondition?.conditionHelpText && (
-                            <p className="mt-2 text-xs text-gray-500">
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                               {
                                 selectedEbayCondition.conditionHelpText
                               }
@@ -2831,7 +2867,7 @@ export default function GenerateListingPage() {
                           selectedEbayCondition.descriptors.length >
                             0 && (
                             <div>
-                              <h4 className="mb-3 font-semibold text-gray-800">
+                              <h4 className="mb-3 font-semibold text-gray-800 dark:text-gray-200">
                                 Condition Details
                               </h4>
 
@@ -2855,7 +2891,7 @@ export default function GenerateListingPage() {
                                         key={
                                           descriptor.descriptorId
                                         }
-                                        className="rounded-lg border bg-white p-4"
+                                        className="rounded-lg border bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                                       >
                                         <label className="mb-2 block font-semibold">
                                           {
@@ -2948,7 +2984,7 @@ export default function GenerateListingPage() {
                                             placeholder={`Enter ${descriptor.name}`}
                                           />
                                         ) : (
-                                          <p className="text-sm text-gray-500">
+                                          <p className="text-sm text-gray-500 dark:text-gray-400">
                                             eBay did
                                             not return
                                             selectable
@@ -2968,7 +3004,7 @@ export default function GenerateListingPage() {
                         {/* CONDITION SUMMARY */}
 
                         {selectedEbayCondition && (
-                          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+                          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300">
                             <p>
                               <span className="font-semibold">
                                 Selected condition:
@@ -2998,7 +3034,7 @@ export default function GenerateListingPage() {
                             {!ebayPublishValidation.ready &&
                               ebayPublishValidation.missing.length >
                                 0 && (
-                                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+                                <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
                                   <p className="font-semibold">
                                     Complete these
                                     fields before
@@ -3025,7 +3061,7 @@ export default function GenerateListingPage() {
                                 </div>
                               )}
 
-                            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
                               <h4 className="font-semibold text-red-900">
                                 Ready to Publish
                               </h4>
@@ -3059,13 +3095,13 @@ export default function GenerateListingPage() {
                         ) : (
                           /* PUBLISHED SUCCESS */
 
-                          <div className="rounded-lg border border-green-300 bg-green-50 p-5">
-                            <h3 className="text-lg font-semibold text-green-900">
+                          <div className="rounded-lg border border-green-300 bg-green-50 p-5 dark:border-green-900 dark:bg-green-950">
+                            <h3 className="text-lg font-semibold text-green-900 dark:text-green-300">
                               Published to eBay
                               Production
                             </h3>
 
-                            <div className="mt-3 space-y-2 text-sm text-green-900">
+                            <div className="mt-3 space-y-2 text-sm text-green-900 dark:text-green-300">
                               <p>
                                 <span className="font-semibold">
                                   Listing ID:

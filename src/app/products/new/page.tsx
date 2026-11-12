@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,26 @@ type SelectedImage = {
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.push("/login");
+        return;
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
 
   /*
    * =====================================================
@@ -213,13 +233,6 @@ export default function NewProductPage() {
       return;
     }
 
-    if (!sku.trim()) {
-      setError(
-        "Please enter a SKU."
-      );
-
-      return;
-    }
 
     const numericPrice =
       Number(price);
@@ -293,6 +306,13 @@ export default function NewProductPage() {
         );
       }
 
+      const finalSku =
+        sku.trim() ||
+        `LN-${crypto.randomUUID()
+          .replaceAll("-", "")
+          .slice(0, 12)
+          .toUpperCase()}`;
+
       /*
        * =================================================
        * CREATE CENTRAL PRODUCT
@@ -321,7 +341,7 @@ export default function NewProductPage() {
             null,
 
           sku:
-            sku.trim(),
+            finalSku,
 
           price:
             numericPrice,
@@ -544,6 +564,14 @@ export default function NewProductPage() {
     }
   }
 
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+      </main>
+    );
+  }
+
   /*
    * =====================================================
    * PAGE
@@ -551,10 +579,10 @@ export default function NewProductPage() {
    */
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       {/* NAVIGATION */}
 
-      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm">
+      <nav className="flex items-center justify-between bg-white px-10 py-6 shadow-sm dark:bg-gray-900">
         <a
           href="/"
           className="text-2xl font-bold text-blue-600"
@@ -591,14 +619,18 @@ export default function NewProductPage() {
             Add New Product
           </h1>
 
-          <p className="mx-auto mt-4 max-w-2xl text-gray-600">
+          <p className="mx-auto mt-4 max-w-2xl text-gray-600 dark:text-gray-400 ">
             Add a product to ListNexus, upload its
             photos, and then generate an AI-assisted
             marketplace listing.
           </p>
+
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="text-red-600">*</span> Required field
+          </p>
         </div>
 
-        <div className="rounded-xl border bg-white p-8 shadow-sm">
+        <div className="rounded-xl border bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-900">
           <div className="space-y-6">
             {/* TITLE */}
 
@@ -623,7 +655,7 @@ export default function NewProductPage() {
                   )
                 }
                 placeholder="Example: Bulbasaur Pokémon Card"
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -632,9 +664,6 @@ export default function NewProductPage() {
             <div>
               <label className="mb-2 block font-semibold">
                 SKU
-                <span className="ml-1 text-red-600">
-                  *
-                </span>
               </label>
 
               <input
@@ -649,14 +678,13 @@ export default function NewProductPage() {
                     event.target.value
                   )
                 }
-                placeholder="Example: PKM-BULB-001"
-                className="w-full rounded-lg border px-4 py-3"
+                placeholder="Optional: PKM-BULB-001"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
-                This becomes the centralized identifier
-                used when syncing the product to
-                marketplaces.
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Optional. If left blank, ListNexus will create a unique SKU
+                automatically for inventory and marketplace syncing.
               </p>
             </div>
 
@@ -680,7 +708,7 @@ export default function NewProductPage() {
                   )
                 }
                 placeholder="Example: Trading Cards"
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
             </div>
 
@@ -702,12 +730,12 @@ export default function NewProductPage() {
                     event.target.value
                   )
                 }
-                placeholder="Anything you already know about the item..."
+                placeholder="Description; Anything you already know about the item..."
                 rows={4}
-                className="w-full rounded-lg border px-4 py-3"
+                className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 These notes give AI additional context.
                 They are not automatically treated as
                 the final marketplace description.
@@ -745,7 +773,7 @@ export default function NewProductPage() {
                       )
                     }
                     placeholder="9.99"
-                    className="w-full rounded-lg border py-3 pl-8 pr-4"
+                    className="w-full rounded-lg border py-3 pl-8 pr-4 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                   />
                 </div>
               </div>
@@ -772,7 +800,7 @@ export default function NewProductPage() {
                       event.target.value
                     )
                   }
-                  className="w-full rounded-lg border px-4 py-3"
+                  className="w-full rounded-lg border px-4 py-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500"
                 />
               </div>
             </div>
@@ -787,31 +815,48 @@ export default function NewProductPage() {
                 </span>
               </label>
 
-              <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
-                <input
-                  id="product-images"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  capture="environment"
-                  multiple
-                  onChange={
-                    handleImageSelection
-                  }
-                  className="hidden"
-                />
+              <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center dark:border-gray-600 dark:bg-gray-800">
+                <div className="flex flex-wrap justify-center gap-3">
+                  {/* Take Photo */}
+                  <input
+                    id="take-photo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    capture="environment"
+                    onChange={handleImageSelection}
+                    className="hidden"
+                  />
 
-                <label
-                  htmlFor="product-images"
-                  className="inline-block cursor-pointer rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
-                >
-                  Take or Upload Photos
-                </label>
+                  <label
+                    htmlFor="take-photo"
+                    className="inline-block cursor-pointer rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+                  >
+                    Take Photo
+                  </label>
 
-                <p className="mt-3 text-sm text-gray-500">
+                  {/* Upload Photos */}
+                  <input
+                    id="upload-photos"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={handleImageSelection}
+                    className="hidden"
+                  />
+
+                  <label
+                    htmlFor="upload-photos"
+                    className="inline-block cursor-pointer rounded-lg bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500"
+                  >
+                    Upload Photos
+                  </label>
+                </div>
+
+                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                   JPG, PNG, or WebP. Up to 8 images.
                 </p>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                   The first image becomes the primary
                   marketplace image.
                 </p>
@@ -837,7 +882,7 @@ export default function NewProductPage() {
                         key={
                           `${image.file.name}-${index}`
                         }
-                        className="overflow-hidden rounded-lg border"
+                        className="overflow-hidden rounded-lg border dark:border-gray-800"
                       >
                         <img
                           src={
@@ -846,11 +891,11 @@ export default function NewProductPage() {
                           alt={`Selected product image ${
                             index + 1
                           }`}
-                          className="h-44 w-full object-contain bg-gray-50"
+                          className="h-44 w-full object-contain bg-gray-50 dark:bg-gray-950"
                         />
 
                         <div className="p-3">
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                             {
                               image.file.name
                             }
@@ -888,7 +933,7 @@ export default function NewProductPage() {
             {/* ERROR */}
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
                 {error}
               </div>
             )}
@@ -896,7 +941,7 @@ export default function NewProductPage() {
             {/* SUCCESS */}
 
             {message && (
-              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
                 {message}
               </div>
             )}

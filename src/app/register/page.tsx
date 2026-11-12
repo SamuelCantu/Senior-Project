@@ -1,7 +1,7 @@
 "use client";
 
 // React state lets us store the values entered into the form.
-import { useState, type FormEvent } from "react";
+import { use, useState, useEffect, type FormEvent } from "react";
 
 // Link lets the user navigate back to the login page.
 import Link from "next/link";
@@ -9,7 +9,14 @@ import Link from "next/link";
 // Imports the Supabase browser client we already created.
 import { createClient } from "@/lib/supabase/client";
 
+//
+import { useRouter } from "next/navigation";
+
 export default function RegisterPage() {
+  //
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   // Stores the user's name.
   const [name, setName] = useState("");
 
@@ -19,11 +26,33 @@ export default function RegisterPage() {
   // Stores the user's password.
   const [password, setPassword] = useState("");
 
+  //Confirms the password.
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   // Displays success or error messages.
   const [message, setMessage] = useState("");
 
   // Keeps track of whether registration is currently processing.
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        router.push("/dashboard");
+        return;
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
 
   // Runs when the user submits the registration form.
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -32,6 +61,13 @@ export default function RegisterPage() {
 
     setMessage("");
     setLoading(true);
+
+    // Make sure both password fields match.
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     // Connect to Supabase.
     const supabase = createClient();
@@ -72,6 +108,14 @@ export default function RegisterPage() {
     }
 
     setLoading(false);
+  }
+
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </main>
+    );
   }
 
   return (
@@ -150,6 +194,27 @@ export default function RegisterPage() {
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+            />
+          </div>
+
+          {/* Confirm password field */}
+          <div>
+            <label
+              className="mb-1 block text-sm font-medium"
+              htmlFor="confirmPassword"
+            >
+              Confirm Password
+            </label>
+
+            <input
+              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
             />
           </div>
 

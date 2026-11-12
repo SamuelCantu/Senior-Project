@@ -16,6 +16,9 @@ import { createClient } from "@/lib/supabase/client";
 export default function LoginPage() {
   const router = useRouter();
 
+  //Keeps logged in users away from login page
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
   // Stores the email entered by the user.
   const [email, setEmail] = useState("");
 
@@ -27,6 +30,26 @@ export default function LoginPage() {
 
   // Tracks whether login is currently processing.
   const [loading, setLoading] = useState(false);
+
+  //Runs to keep logged in users away
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        router.push("/dashboard");
+        return;
+      }
+
+      setCheckingAuth(false);
+    }
+
+    checkAuth();
+  }, [router]);
 
   // Runs when the login form is submitted.
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
@@ -55,9 +78,17 @@ export default function LoginPage() {
       return;
     }
 
-    // Send the user back to the homepage after login.
-    router.push("/");
+    // Send the user to the dashboard after login.
+    router.push("/dashboard");
     router.refresh();
+  }
+
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </main>
+    );
   }
 
   return (
@@ -122,6 +153,15 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className="text-right">
+            <Link
+              href="/login/forgot-password"
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           {/* Supabase error message */}
           {error && (
             <p className="text-sm text-red-600">
@@ -149,14 +189,6 @@ export default function LoginPage() {
             href="/"
           >
             Back to home
-          </Link>
-
-          {/* Temporary dashboard link for development */}
-          <Link
-            className="text-blue-600 hover:underline"
-            href="/dashboard"
-          >
-            User Page Dev Access
           </Link>
 
           {/* Registration page */}
