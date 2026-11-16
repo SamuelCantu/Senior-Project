@@ -107,7 +107,7 @@ export default function DashboardPage() {
             .from("marketplace_listings")
             .select("*", { count: "exact", head: true })
             .in("product_id", productIds)
-            .eq("status", "ACTIVE");
+            .eq("status", "ACTIVE").eq("environment", "PRODUCTION");
 
           if (listingsError) {
             console.error("Could not count active listings:", listingsError);
@@ -163,9 +163,9 @@ export default function DashboardPage() {
 
   const items = inventory?.items ?? [];
   const overview = [
-    { label: "Active listings", value: String(activeListings) },
-    { label: "Drafts", value: String(drafts) },
-    { label: "Inventory items", value: String(inventoryItems) },
+    { label: "Active listings", value: String(activeListings), href: "/dashboard/listings", linkText: "View active listings" },
+    { label: "Drafts", value: String(drafts), href: "/dashboard/drafts", linkText: "View drafts" },
+    { label: "Inventory items", value: String(inventoryItems), href: "/dashboard/inventory", linkText: "Manage inventory" },
   ];
 
   if (checkingAuth || !authenticated) {
@@ -300,6 +300,12 @@ export default function DashboardPage() {
                   {item.label}
                 </p>
                 <p className="mt-2 text-3xl font-semibold">{item.value}</p>
+<Link
+  href={item.href}
+  className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
+>
+  {item.linkText}
+</Link>
               </div>
             ))}
           </aside>
