@@ -27,7 +27,9 @@ while ($true) {
   } catch {
     Write-Warning "$(Get-Date -Format 'HH:mm:ss') Order import or outbound worker unavailable/blocked; outbound sync skipped. Check Next.js terminal."
   }
-  Start-Sleep -Seconds 60
+  Start-Sleep -Seconds 1
 }
+
+
 
 

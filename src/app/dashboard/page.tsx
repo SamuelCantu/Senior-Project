@@ -58,11 +58,17 @@ export default function DashboardPage() {
         }
 
         setAuthenticated(true);
-        setDisplayName(
-          user.user_metadata?.display_name ??
-            user.user_metadata?.full_name ??
-            ""
-        );
+        
+        const savedName =
+          user.user_metadata?.first_name ||
+          user.user_metadata?.display_name ||
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "there";
+
+        setDisplayName(String(savedName).trim().split(/\s+/)[0]);
+
 
         const [productCountResult, draftCountResult, productsResult] =
           await Promise.all([
@@ -189,7 +195,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         <section className="mb-8">
           <div className="mb-2 text-3xl font-bold">
-            <span className="text-blue-600">Hello {displayName || "User"},</span>
+            <span className="text-blue-600">Hello {displayName},</span>
           </div>
           <h1 className="text-3xl font-bold">ListNexus Station</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">

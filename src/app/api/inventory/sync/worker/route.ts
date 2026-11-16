@@ -97,13 +97,13 @@ async function doWork() {
   const offerId = String(mapping.external_offer_id ?? "");
   const listingId = String(mapping.external_listing_id ?? "");
   if (recorded === null || !offerId || !listingId) throw new Error("Invalid saved eBay listing mapping.");
-  if (target > recorded) {
-    return { success: false, action: "blocked-increase", sku, target, recorded,
-      note: "Central stock exceeds last synced stock; the worker will never increase a live offer." };
+  if (target > recorded && process.env.INVENTORY_SYNC_ALLOW_INCREASE !== "true") {
+    return { success: false, action: "blocked-increase-disabled", sku, target, recorded,
+      note: "Set INVENTORY_SYNC_ALLOW_INCREASE=true to enable intentional restocks." };
   }
 
   // Inventory events act as an audit trail. Reductions must be traceable.
-  if (target < recorded) {
+  if (target !== recorded) {
     const { data: events, error: eventError } = await admin.from("inventory_sync_events")
       .select("id,old_quantity,new_quantity,created_at")
       .eq("user_id", ownerId).eq("product_id", product.id)
@@ -151,7 +151,7 @@ async function doWork() {
     }
     return { success: true, action: "already-matched", sku, quantity: target, marketplaceChanges: false };
   }
-  if (itemQty < target || itemQty !== recorded) {
+  if (itemQty !== recorded) {
     return { success: false, action: "blocked-remote-drift", sku, target, itemQty, recorded,
       note: "Remote quantity changed independently. Reconcile sales before sending any inventory update." };
   }
@@ -210,7 +210,7 @@ async function doWork() {
     .eq("id", mapping.id).eq("product_id", product.id)
     .eq("quantity", recorded);
   if (savedError) throw new Error(`eBay updated but mapping save failed: ${savedError.message}`);
-  return { success: true, action: "production-reduced", sku, from: itemQty, to: target,
+  return { success: true, action: target > recorded ? "production-increased" : "production-reduced", sku, from: itemQty, to: target,
     listingId, marketplaceChanges: true, note: "Bonanza was not modified." };
 }
 
