@@ -16,9 +16,9 @@ export default function DashboardPage() {
   const [drafts, setDrafts] = useState(0);
   const [inventoryItems, setInventoryItems] = useState(0);
   const overview = [
-    { label: "Active listings", value: activeListings.toString() },
-    { label: "Drafts", value: drafts.toString() },
-    { label: "Inventory items", value: inventoryItems.toString() },
+    { label: "Active listings", value: activeListings.toString(), href:"/dashboard/listings", linkText: "View active listings" },
+    { label: "Drafts", value: drafts.toString(), href:"/dashboard/drafts", linkText: "View drafts" },
+    { label: "Inventory items", value: inventoryItems.toString(), href:"/dashboard/inventory", linkText: "Manage inventory" },
   ];    
   useEffect(() => {
     const supabase = createClient();
@@ -85,7 +85,8 @@ export default function DashboardPage() {
             .from("marketplace_listings")
             .select("*", { count: "exact", head: true })
             .in("product_id", productIds)
-            .eq("status", "ACTIVE");
+            .eq("status", "ACTIVE")
+            .eq("enviroment", "PRODUCTION");
 
           if (activeCountError) {
             console.error(
@@ -180,6 +181,14 @@ export default function DashboardPage() {
               >
                 <p className="text-sm text-gray-600 dark:text-gray-400">{item.label}</p>
                 <p className="mt-2 text-3xl font-semibold">{item.value}</p>
+                
+                <Link
+                  href={item.href}
+                  className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline"
+                >
+                  {item.linkText}
+                </Link>
+                
               </div>
             ))}
           </aside>
