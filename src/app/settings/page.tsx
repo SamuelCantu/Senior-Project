@@ -1,10 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import AuthNav from "@/components/AuthNav";
+
+const EBAY_OAUTH_MESSAGES = {
+  connected: "Your eBay Production account is connected.",
+  denied: "eBay authorization was declined. You can try again.",
+  "invalid-state": "The authorization session expired or could not be verified. Please try again.",
+  "transaction-check-failed": "Could not verify the eBay authorization session. Please try again.",
+  "missing-code": "eBay did not return an authorization code. Please try again.",
+  "configuration-missing": "eBay Production connection is not configured correctly. Please contact support.",
+  "token-exchange-failed": "eBay could not complete authorization. Please try again.",
+  "invalid-token-response": "eBay returned an invalid authorization response. Please try again.",
+  "connection-check-failed": "Could not verify the existing eBay connection.",
+  "save-failed": "Authorization succeeded, but ListNexus could not save the connection.",
+  "connection-failed": "Could not complete the eBay connection. Please try again.",
+  "login-required": "Please sign in again before connecting eBay.",
+  "start-failed": "Could not start eBay authorization. Please try again.",
+  "popup-cancelled": "eBay authorization was canceled. Your account is still disconnected. You can try again whenever you’re ready.",
+} as const;
+
+type EbayOAuthResult = keyof typeof EBAY_OAUTH_MESSAGES;
+
+function isEbayOAuthResult(value: unknown): value is EbayOAuthResult {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(EBAY_OAUTH_MESSAGES, value);
+}
+
+const EBAY_POPUP_MESSAGE_TYPE = "listnexus:ebay-production-oauth-complete";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -15,6 +40,28 @@ export default function SettingsPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [message, setMessage] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+  const [ebayConnected, setEbayConnected] = useState<boolean | null>(null);
+  const [ebayStatusError, setEbayStatusError] = useState("");
+  const [ebayResult, setEbayResult] = useState("");
+
+  const refreshEbayStatus = useCallback(async () => {
+    try {
+      const response = await fetch("/api/ebay/production/status", {
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setEbayStatusError("Could not load eBay connection status.");
+        return null;
+      }
+      const status: { connected: boolean } = await response.json();
+      setEbayStatusError("");
+      setEbayConnected(status.connected);
+      return status.connected;
+    } catch {
+      setEbayStatusError("Could not load eBay connection status.");
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -42,6 +89,84 @@ export default function SettingsPage() {
 
     loadUser();
   }, [router]);
+
+  useEffect(() => {
+    const result = new URLSearchParams(window.location.search).get("ebay");
+    if (isEbayOAuthResult(result)) setEbayResult(EBAY_OAUTH_MESSAGES[result]);
+    void refreshEbayStatus();
+  }, [refreshEbayStatus]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("popup") !== "1") return;
+
+    const rawResult = params.get("ebay");
+    const result = isEbayOAuthResult(rawResult) ? rawResult : "connection-failed";
+    window.history.replaceState(window.history.state, "", "/settings");
+
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(
+        { type: EBAY_POPUP_MESSAGE_TYPE, result },
+        window.location.origin
+      );
+    }
+    window.close();
+  }, []);
+
+  function handleEbayConnection() {
+    setEbayResult("");
+    const popup = window.open(
+      "about:blank",
+      "listnexusEbayOAuth",
+      "popup,width=640,height=760,resizable=yes,scrollbars=yes"
+    );
+
+    if (!popup) {
+      window.location.assign("/api/ebay/production/auth");
+      return;
+    }
+
+    let completed = false;
+    let popupWatch: number | null = null;
+    const stopWatching = () => {
+      if (popupWatch !== null) window.clearInterval(popupWatch);
+      window.removeEventListener("message", onMessage);
+    };
+    const onMessage = (event: MessageEvent<unknown>) => {
+      if (event.origin !== window.location.origin || event.source !== popup) return;
+      if (!event.data || typeof event.data !== "object") return;
+
+      const data = event.data as { type?: unknown; result?: unknown };
+      if (data.type !== EBAY_POPUP_MESSAGE_TYPE || !isEbayOAuthResult(data.result)) return;
+
+      completed = true;
+      stopWatching();
+      setEbayResult(EBAY_OAUTH_MESSAGES[data.result]);
+      popup.close();
+      void refreshEbayStatus();
+    };
+
+    window.addEventListener("message", onMessage);
+    popupWatch = window.setInterval(() => {
+      if (!popup.closed) return;
+      if (popupWatch !== null) window.clearInterval(popupWatch);
+      popupWatch = null;
+
+      window.setTimeout(() => {
+        if (completed) return;
+        window.removeEventListener("message", onMessage);
+        void refreshEbayStatus().then((connected) => {
+          if (connected) {
+            setEbayResult(EBAY_OAUTH_MESSAGES.connected);
+          } else {
+            setEbayResult(EBAY_OAUTH_MESSAGES["popup-cancelled"]);
+          }
+        });
+      }, 1000);
+    }, 500);
+
+    popup.location.href = "/api/ebay/production/auth?popup=1";
+  }
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -188,15 +313,32 @@ export default function SettingsPage() {
                 </p>
 
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Account connection is managed through eBay authorization.
+                  {ebayConnected === null
+                    ? "Checking eBay connection..."
+                    : ebayConnected
+                      ? "Your eBay Production account is connected."
+                      : "Connect your eBay seller account to ListNexus."}
                 </p>
+                {ebayStatusError && (
+                  <p role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {ebayStatusError}
+                  </p>
+                )}
+                {ebayResult && (
+                  <p
+                    role="status"
+                    className={`mt-1 text-sm ${ebayResult.startsWith("Your eBay") ? "text-green-700 dark:text-green-300" : "text-amber-700 dark:text-amber-300"}`}
+                  >
+                    {ebayResult}
+                  </p>
+                )}
               </div>
-
               <button
                 type="button"
-                disabled
-                className="rounded-lg bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                Connection setup in progress
+                onClick={handleEbayConnection}
+                className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                {ebayConnected ? "Reconnect eBay" : "Connect eBay"}
               </button>
             </div>
 

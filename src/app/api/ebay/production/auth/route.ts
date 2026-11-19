@@ -1,6 +1,6 @@
-import { randomBytes } from "crypto";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createProductionOAuthTransaction } from "@/lib/ebay/productionOAuthState";
 
 export const runtime = "nodejs";
 
@@ -18,7 +18,15 @@ const EBAY_SCOPES = [
   "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
 ];
 
-export async function GET() {
+function settingsRedirect(request: NextRequest, result: string) {
+  const url = new URL(`/settings?ebay=${encodeURIComponent(result)}`, request.url);
+  url.searchParams.set("popup", "1");
+  return NextResponse.redirect(url);
+}
+
+export async function GET(request: NextRequest) {
+  const isPopup = request.nextUrl.searchParams.get("popup") === "1";
+
   try {
     /*
      * =====================================================
@@ -40,6 +48,7 @@ export async function GET() {
       userError ||
       !user
     ) {
+      if (isPopup) return settingsRedirect(request, "login-required");
       return NextResponse.redirect(
         new URL(
           "/login",
@@ -69,6 +78,7 @@ export async function GET() {
       !clientId ||
       !redirectUri
     ) {
+      if (isPopup) return settingsRedirect(request, "configuration-missing");
       return NextResponse.json(
         {
           error:
@@ -83,7 +93,7 @@ export async function GET() {
     /*
      * =====================================================
      * STEP 3
-     * GENERATE CSRF STATE
+     * GENERATE A ONE-TIME CSRF TRANSACTION
      * =====================================================
      *
      * eBay returns this exact value to our callback.
@@ -91,10 +101,7 @@ export async function GET() {
      * accepting the authorization code.
      */
 
-    const state =
-      randomBytes(32).toString(
-        "hex"
-      );
+    const transaction = await createProductionOAuthTransaction(user.id);
 
     /*
      * =====================================================
@@ -123,7 +130,7 @@ export async function GET() {
             " "
           ),
 
-        state,
+        state: transaction.state,
 
         /*
          * Forces the seller login/consent screen.
@@ -147,43 +154,37 @@ export async function GET() {
         ebayUrl
       );
 
-    response.cookies.set(
-      "ebay_production_oauth_state",
-      state,
-      {
-        httpOnly:
-          true,
-
-        secure:
-          true,
-
-        sameSite:
-          "lax",
-
-        path:
-          "/",
-
-        /*
-         * 10 minutes.
-         */
-        maxAge:
-          60 * 10,
-      }
-    );
-
+    response.cookies.set("ebay_production_oauth_state", transaction.state, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: transaction.maxAge,
+    });
+    response.cookies.set("ebay_production_oauth_user", "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+    response.cookies.set("ebay_production_oauth_popup", isPopup ? "1" : "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: isPopup ? transaction.maxAge : 0,
+    });
     return response;
   } catch (error) {
-    console.error(
-      "eBay Production OAuth start error:",
-      error
-    );
+    console.error("eBay Production OAuth start failed.");
+
+    if (isPopup) return settingsRedirect(request, "start-failed");
 
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Could not start eBay Production authorization.",
+          "Could not start eBay Production authorization.",
       },
       {
         status: 500,

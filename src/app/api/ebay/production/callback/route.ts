@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { consumeProductionOAuthTransaction } from "@/lib/ebay/productionOAuthState";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,18 @@ type EbayTokenResponse = {
 export async function GET(
   request: NextRequest
 ) {
+  const settingsRedirect = (result: string) => {
+    const url = new URL(`/settings?ebay=${encodeURIComponent(result)}`, request.url);
+    if (request.cookies.get("ebay_production_oauth_popup")?.value === "1") {
+      url.searchParams.set("popup", "1");
+    }
+    const response = NextResponse.redirect(url);
+    response.cookies.delete("ebay_production_oauth_state");
+    response.cookies.delete("ebay_production_oauth_user");
+    response.cookies.delete("ebay_production_oauth_popup");
+    return response;
+  };
+
   try {
     /*
      * =====================================================
@@ -59,92 +72,41 @@ export async function GET(
       userError ||
       !user
     ) {
-      return NextResponse.redirect(
-        new URL(
-          "/login?error=ebay-login-required",
-          request.url
-        )
-      );
+      return settingsRedirect("login-required");
     }
 
     /*
-     * =====================================================
-     * STEP 2
-     * Check whether eBay returned an OAuth error.
-     * =====================================================
+     * The one-time server transaction binds this response to the
+     * authenticated user who initiated authorization.
      */
+    const returnedState = request.nextUrl.searchParams.get("state");
+    const savedState = request.cookies.get("ebay_production_oauth_state")?.value;
 
-    const ebayError =
-      request.nextUrl.searchParams.get(
-        "error"
-      );
-
-    if (ebayError) {
-      console.error(
-        "eBay Production authorization error:",
-        ebayError
-      );
-
-      return NextResponse.redirect(
-        new URL(
-          "/ai?ebay=declined",
-          request.url
-        )
-      );
+    if (!savedState || savedState !== returnedState) {
+      return settingsRedirect("invalid-state");
     }
 
+    let transactionConsumed: boolean;
+    try {
+      transactionConsumed = await consumeProductionOAuthTransaction(
+        returnedState,
+        user.id
+      );
+    } catch {
+      return settingsRedirect("transaction-check-failed");
+    }
+    if (!transactionConsumed) return settingsRedirect("invalid-state");
+
     /*
-     * =====================================================
-     * STEP 3
-     * Read the authorization code and state from eBay.
-     * =====================================================
+     * Handle denial only after validating the transaction.
      */
+    const ebayError = request.nextUrl.searchParams.get("error");
+    if (ebayError) return settingsRedirect("denied");
 
-    const code =
-      request.nextUrl.searchParams.get(
-        "code"
-      );
-
-    const returnedState =
-      request.nextUrl.searchParams.get(
-        "state"
-      );
-
-    const savedState =
-      request.cookies.get(
-        "ebay_production_oauth_state"
-      )?.value;
+    const code = request.nextUrl.searchParams.get("code");
 
     if (!code) {
-      return NextResponse.json(
-        {
-          error:
-            "eBay did not return an authorization code.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /*
-     * The state value protects the OAuth flow
-     * from forged callback requests.
-     */
-    if (
-      !returnedState ||
-      !savedState ||
-      returnedState !== savedState
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid eBay OAuth state. Start the eBay connection from ListNexus again.",
-        },
-        {
-          status: 400,
-        }
-      );
+      return settingsRedirect("missing-code");
     }
 
     /*
@@ -176,15 +138,7 @@ export async function GET(
       !clientSecret ||
       !redirectUri
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "eBay Production OAuth environment variables are incomplete.",
-        },
-        {
-          status: 500,
-        }
-      );
+      return settingsRedirect("configuration-missing");
     }
 
     /*
@@ -242,24 +196,8 @@ export async function GET(
     if (
       !tokenResponse.ok
     ) {
-      const errorText =
-        await tokenResponse.text();
-
-      console.error(
-        "eBay Production token exchange failed:",
-        tokenResponse.status,
-        errorText
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "eBay rejected the Production OAuth token exchange.",
-        },
-        {
-          status: 500,
-        }
-      );
+      console.error("eBay Production token exchange failed:", tokenResponse.status);
+      return settingsRedirect("token-exchange-failed");
     }
 
     const tokens =
@@ -270,15 +208,7 @@ export async function GET(
       !tokens.refresh_token ||
       !tokens.expires_in
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "eBay returned an incomplete Production token response.",
-        },
-        {
-          status: 500,
-        }
-      );
+      return settingsRedirect("invalid-token-response");
     }
 
     /*
@@ -358,15 +288,7 @@ export async function GET(
         lookupError
       );
 
-      return NextResponse.json(
-        {
-          error:
-            "Could not check the existing eBay Production connection.",
-        },
-        {
-          status: 500,
-        }
-      );
+      return settingsRedirect("connection-check-failed");
     }
 
     const accountValues = {
@@ -441,15 +363,7 @@ export async function GET(
           updateError
         );
 
-        return NextResponse.json(
-          {
-            error:
-              "Could not save the eBay Production connection.",
-          },
-          {
-            status: 500,
-          }
-        );
+        return settingsRedirect("save-failed");
       }
     } else {
       /*
@@ -475,15 +389,7 @@ export async function GET(
           insertError
         );
 
-        return NextResponse.json(
-          {
-            error:
-              "Could not save the eBay Production connection.",
-          },
-          {
-            status: 500,
-          }
-        );
+        return settingsRedirect("save-failed");
       }
     }
 
@@ -494,38 +400,10 @@ export async function GET(
      * =====================================================
      */
 
-    const response =
-      NextResponse.redirect(
-        new URL(
-          "/ai?ebay=production-connected",
-          request.url
-        )
-      );
-
-    /*
-     * The OAuth state has served its purpose.
-     */
-    response.cookies.delete(
-      "ebay_production_oauth_state"
-    );
-
-    return response;
+    return settingsRedirect("connected");
   } catch (error) {
-    console.error(
-      "eBay Production callback error:",
-      error
-    );
+    console.error("eBay Production callback failed.");
 
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Could not connect the eBay Production account.",
-      },
-      {
-        status: 500,
-      }
-    );
+    return settingsRedirect("connection-failed");
   }
 }
