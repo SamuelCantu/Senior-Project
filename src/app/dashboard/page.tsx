@@ -299,13 +299,29 @@ export default function DashboardPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {item.label}
                 </p>
-                <p className="mt-2 text-3xl font-semibold">{item.value}</p>
-<Link
-  href={item.href}
-  className="mt-3 inline-block text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
->
-  {item.linkText}
-</Link>
+                {item.label === "Inventory items" && inventoryItems === 0 ? (
+                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Your inventory is empty. Add your first product to get started.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-3xl font-semibold">{item.value}</p>
+                )}
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Link
+                    href={item.href}
+                    className="text-sm font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {item.linkText}
+                  </Link>
+                  {item.label === "Inventory items" && (
+                    <Link
+                      href="/products/new"
+                      className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Add Product
+                    </Link>
+                  )}
+                </div>
               </div>
             ))}
           </aside>
