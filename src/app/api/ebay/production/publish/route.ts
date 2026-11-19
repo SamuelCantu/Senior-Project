@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   getProductionEbayAccessToken,
 } from "@/lib/ebay/getProductionAccessToken";
+import { getProductionEbayLocations } from "@/lib/ebay/productionLocations";
 
 const EBAY_API_BASE =
   "https://api.ebay.com";
@@ -197,11 +198,9 @@ async function ebayRequest(
     );
 
   if (!response.ok) {
-    console.error(
-      "eBay API error:",
-      response.status,
-      data
-    );
+    console.error("eBay Production API request failed:", {
+      status: response.status,
+    });
 
     throw new Error(
       getEbayErrorMessage(
@@ -860,128 +859,37 @@ export async function POST(
       }
     }
 
-    /*
-     * =================================================
-     * STEP 9
-     * GET DEFAULT LISTNEXUS LOCATION MAPPING
-     * =================================================
-     */
+    const accessToken =
+      await getProductionEbayAccessToken(user.id);
+    const ebayLocations =
+      await getProductionEbayLocations(accessToken);
+    const requestedLocationKey =
+      typeof body.merchantLocationKey === "string"
+        ? body.merchantLocationKey
+        : undefined;
+    const selectedLocation = requestedLocationKey
+      ? ebayLocations.find(
+          (location) => location.merchantLocationKey === requestedLocationKey
+        )
+      : ebayLocations[0];
 
-    let {
-      data: locations,
-      error: locationError,
-    } = await admin
-      .from("locations")
-      .select(`
-        id,
-        name
-      `)
-      .eq(
-        "user_id",
-        user.id
-      )
-      .eq(
-        "is_default",
-        true
-      )
-      .limit(1);
-
-    if (!locations?.length && !locationError) {
-      const fallback = await admin
-        .from("locations")
-        .select("id, name")
-        .eq("user_id", user.id)
-        .limit(1);
-
-      locations = fallback.data;
-      locationError = fallback.error;
-    }
-
-    if (
-      locationError ||
-      !locations ||
-      locations.length ===
-      0
-    ) {
+    if (!selectedLocation) {
+      console.warn("No enabled eBay Production inventory location selected:", {
+        enabledLocationCount: ebayLocations.length,
+        requestedLocationProvided: Boolean(requestedLocationKey),
+      });
       return Response.json(
         {
           error:
-            "ListNexus does not have a default inventory location for this user.",
+            "No enabled eBay Production inventory location is available. Add your real shipping origin in eBay, refresh locations, then retry publishing.",
+          code: "EBAY_LOCATION_REQUIRED",
         },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const centralLocation =
-      locations[0];
-
-    const {
-      data:
-      locationMappings,
-      error:
-      locationMappingError,
-    } = await admin
-      .from(
-        "marketplace_locations"
-      )
-      .select(`
-        external_location_id,
-        sync_status
-      `)
-      .eq(
-        "location_id",
-        centralLocation.id
-      )
-      .eq(
-        "marketplace",
-        "EBAY"
-      )
-      .eq(
-        "environment",
-        ENVIRONMENT
-      )
-      .limit(1);
-
-    if (
-      locationMappingError ||
-      !locationMappings ||
-      locationMappings.length ===
-      0
-    ) {
-      return Response.json(
-        {
-          error:
-            "The default ListNexus location has not been synced to eBay Production.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const locationMapping =
-      locationMappings[0];
-
-    if (
-      locationMapping.sync_status !==
-      "SYNCED" ||
-      !locationMapping.external_location_id
-    ) {
-      return Response.json(
-        {
-          error:
-            "The eBay Production inventory location is not ready.",
-        },
-        {
-          status: 400,
-        }
+        { status: 409 }
       );
     }
 
     const merchantLocationKey =
-      locationMapping.external_location_id;
+      selectedLocation.merchantLocationKey;
 
     /*
      * =================================================
@@ -1360,11 +1268,6 @@ export async function POST(
      * =================================================
      */
 
-    const accessToken =
-      await getProductionEbayAccessToken(
-        user.id
-      );
-
     /*
      * =================================================
      * STEP 14
@@ -1422,15 +1325,6 @@ export async function POST(
       `${encodeURIComponent(
         product.sku
       )}`;
-
-    console.log(
-      "eBay Production inventory item payload:",
-      JSON.stringify(
-        inventoryItemBody,
-        null,
-        2
-      )
-    );
 
     await ebayRequest(
       inventoryItemUrl,
@@ -1808,10 +1702,9 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error(
-      "eBay publish error:",
-      error
-    );
+    console.error("eBay Production publish failed:", {
+      errorType: error instanceof Error ? error.name : "UnknownError",
+    });
 
     /*
      * If ListNexus had already created a marketplace

@@ -195,11 +195,9 @@ async function ebayRequest(
     );
 
   if (!response.ok) {
-    console.error(
-      "eBay API error:",
-      response.status,
-      data
-    );
+    console.error("eBay Sandbox API request failed:", {
+      status: response.status,
+    });
 
     throw new Error(
       getEbayErrorMessage(
@@ -894,11 +892,7 @@ export async function POST(
         "user_id",
         user.id
       )
-      .eq(
-        "is_default",
-        true
-      )
-      .limit(1);
+      .order("created_at", { ascending: true });
 
     if (
       locationError ||
@@ -909,16 +903,13 @@ export async function POST(
       return Response.json(
         {
           error:
-            "ListNexus does not have a default inventory location for this user.",
+            "No ListNexus inventory locations are available for this user.",
         },
         {
           status: 400,
         }
       );
     }
-
-    const centralLocation =
-      locations[0];
 
     const {
       data:
@@ -933,10 +924,7 @@ export async function POST(
         external_location_id,
         sync_status
       `)
-      .eq(
-        "location_id",
-        centralLocation.id
-      )
+      .in("location_id", locations.map((location) => location.id))
       .eq(
         "marketplace",
         "EBAY"
@@ -945,37 +933,22 @@ export async function POST(
         "environment",
         ENVIRONMENT
       )
-      .limit(1);
+      .order("last_synced_at", { ascending: false });
+
+    const locationMapping = locationMappings?.find(
+      (mapping) =>
+        mapping.sync_status === "SYNCED" &&
+        Boolean(mapping.external_location_id)
+    );
 
     if (
       locationMappingError ||
-      !locationMappings ||
-      locationMappings.length ===
-        0
+      !locationMapping
     ) {
       return Response.json(
         {
           error:
-            "The default ListNexus location has not been synced to eBay Sandbox.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    const locationMapping =
-      locationMappings[0];
-
-    if (
-      locationMapping.sync_status !==
-        "SYNCED" ||
-      !locationMapping.external_location_id
-    ) {
-      return Response.json(
-        {
-          error:
-            "The eBay Sandbox inventory location is not ready.",
+            "No ListNexus inventory location is synced and ready for eBay Sandbox.",
         },
         {
           status: 400,

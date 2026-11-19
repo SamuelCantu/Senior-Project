@@ -121,6 +121,11 @@ type EbayPublishedListing = {
   listingUrl: string;
 };
 
+type EbayProductionLocation = {
+  merchantLocationKey: string;
+  name: string;
+};
+
 /*
  * =====================================================
  * PAGE
@@ -221,6 +226,21 @@ export default function GenerateListingPage() {
   ] = useState<EbayPublishedListing | null>(
     null
   );
+
+  const [ebayProductionLocations, setEbayProductionLocations] =
+    useState<EbayProductionLocation[]>([]);
+  const [selectedEbayLocationKey, setSelectedEbayLocationKey] =
+    useState("");
+  const [loadingEbayLocations, setLoadingEbayLocations] = useState(false);
+  const [creatingEbayLocation, setCreatingEbayLocation] = useState(false);
+  const [ebayShippingOrigin, setEbayShippingOrigin] = useState({
+    name: "",
+    addressLine1: "",
+    city: "",
+    stateOrProvince: "",
+    postalCode: "",
+    country: "",
+  });
 
   /*
    * =====================================================
@@ -1384,6 +1404,28 @@ export default function GenerateListingPage() {
         data as EbayPreparation
       );
 
+      setLoadingEbayLocations(true);
+      try {
+        const locationResponse = await fetch(
+          "/api/ebay/production/setup-location"
+        );
+        const locationData = await locationResponse.json();
+        if (!locationResponse.ok) {
+          throw new Error(
+            locationData.error || "Could not retrieve eBay Production inventory locations."
+          );
+        }
+        const locations = locationData.locations as EbayProductionLocation[];
+        setEbayProductionLocations(locations);
+        setSelectedEbayLocationKey((current) =>
+          locations.some((location) => location.merchantLocationKey === current)
+            ? current
+            : locations[0]?.merchantLocationKey ?? ""
+        );
+      } finally {
+        setLoadingEbayLocations(false);
+      }
+
       setMessage(
         "eBay preparation complete. Review the eBay category, item specifics, and condition before publishing."
       );
@@ -1623,6 +1665,16 @@ export default function GenerateListingPage() {
       return;
     }
 
+    if (ebayProductionLocations.length === 0) {
+      setError("Add an enabled eBay inventory location using your real shipping origin before publishing.");
+      return;
+    }
+
+    if (!selectedEbayLocationKey) {
+      setError("Select an enabled eBay inventory location before publishing.");
+      return;
+    }
+
     /*
      * Final confirmation.
      */
@@ -1648,19 +1700,6 @@ export default function GenerateListingPage() {
     setMessage("");
 
     try {
-      const locationResponse = await fetch(
-        "/api/ebay/production/setup-location",
-        { method: "POST" }
-      );
-      const locationData = await locationResponse.json();
-
-      if (!locationResponse.ok) {
-        throw new Error(
-          locationData.error ||
-            "Could not set up the eBay Production inventory location."
-        );
-      }
-
       const response =
         await fetch(
           "/api/ebay/production/publish",
@@ -1687,6 +1726,9 @@ export default function GenerateListingPage() {
 
               conditionDescriptors:
                 ebayDescriptorSelections,
+
+              merchantLocationKey:
+                selectedEbayLocationKey,
             }),
           }
         );
@@ -1749,6 +1791,31 @@ export default function GenerateListingPage() {
       setPublishingEbay(
         false
       );
+    }
+  }
+
+  async function handleCreateEbayLocation() {
+    setCreatingEbayLocation(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/ebay/production/setup-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ebayShippingOrigin),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Could not create the eBay inventory location.");
+      }
+      const location = data.location as EbayProductionLocation;
+      setEbayProductionLocations((existing) => [...existing, location]);
+      setSelectedEbayLocationKey(location.merchantLocationKey);
+      setMessage("eBay Production inventory location created. Review the listing and publish when ready.");
+    } catch (locationError) {
+      setError(locationError instanceof Error ? locationError.message : "Could not create the eBay inventory location.");
+    } finally {
+      setCreatingEbayLocation(false);
     }
   }
 
@@ -3044,6 +3111,55 @@ export default function GenerateListingPage() {
 
                         {!ebayPublishedListing ? (
                           <div className="space-y-4">
+                            {loadingEbayLocations ? (
+                              <p className="text-sm text-gray-600">Loading eBay Production inventory locations...</p>
+                            ) : ebayProductionLocations.length > 0 ? (
+                              <div>
+                                <label className="mb-2 block font-semibold text-gray-800 dark:text-gray-200" htmlFor="ebay-production-location">
+                                  eBay inventory location
+                                </label>
+                                <select
+                                  id="ebay-production-location"
+                                  value={selectedEbayLocationKey}
+                                  onChange={(event) => setSelectedEbayLocationKey(event.target.value)}
+                                  disabled={publishingEbay}
+                                  className="w-full rounded-lg border px-3 py-2"
+                                >
+                                  {ebayProductionLocations.map((location) => (
+                                    <option key={location.merchantLocationKey} value={location.merchantLocationKey}>
+                                      {location.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            ) : (
+                              <div className="space-y-3 rounded-lg border border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-950">
+                                <p className="text-sm text-yellow-900 dark:text-yellow-200">
+                                  No enabled eBay Production location was found. Enter the seller&apos;s actual shipping origin to create one. No address will be inferred.
+                                </p>
+                                {(["name", "addressLine1", "city", "stateOrProvince", "postalCode", "country"] as const).map((field) => (
+                                  <input
+                                    key={field}
+                                    type="text"
+                                    value={ebayShippingOrigin[field]}
+                                    onChange={(event) => setEbayShippingOrigin((origin) => ({ ...origin, [field]: event.target.value }))}
+                                    disabled={creatingEbayLocation || publishingEbay}
+                                    required
+                                    aria-label={field}
+                                    placeholder={{ name: "Location name", addressLine1: "Street address", city: "City", stateOrProvince: "State or region", postalCode: "Postal code", country: "Country code (for example, US)" }[field]}
+                                    className="w-full rounded-lg border px-3 py-2"
+                                  />
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={handleCreateEbayLocation}
+                                  disabled={creatingEbayLocation || publishingEbay || Object.values(ebayShippingOrigin).some((value) => !value.trim())}
+                                  className="rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white disabled:bg-gray-400"
+                                >
+                                  {creatingEbayLocation ? "Creating location..." : "Create eBay inventory location"}
+                                </button>
+                              </div>
+                            )}
                             {!ebayPublishValidation.ready &&
                               ebayPublishValidation.missing.length >
                                 0 && (
@@ -3096,6 +3212,9 @@ export default function GenerateListingPage() {
                               disabled={
                                 publishingEbay ||
                                 preparingEbay ||
+                                loadingEbayLocations ||
+                                ebayProductionLocations.length === 0 ||
+                                !selectedEbayLocationKey ||
                                 !ebayPublishValidation.ready
                               }
                               className="w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:bg-gray-400"
