@@ -867,7 +867,7 @@ export async function POST(
      * =================================================
      */
 
-    const {
+    let {
       data: locations,
       error: locationError,
     } = await admin
@@ -885,6 +885,17 @@ export async function POST(
         true
       )
       .limit(1);
+
+    if (!locations?.length && !locationError) {
+      const fallback = await admin
+        .from("locations")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .limit(1);
+
+      locations = fallback.data;
+      locationError = fallback.error;
+    }
 
     if (
       locationError ||

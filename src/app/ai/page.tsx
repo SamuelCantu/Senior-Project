@@ -1648,6 +1648,19 @@ export default function GenerateListingPage() {
     setMessage("");
 
     try {
+      const locationResponse = await fetch(
+        "/api/ebay/production/setup-location",
+        { method: "POST" }
+      );
+      const locationData = await locationResponse.json();
+
+      if (!locationResponse.ok) {
+        throw new Error(
+          locationData.error ||
+            "Could not set up the eBay Production inventory location."
+        );
+      }
+
       const response =
         await fetch(
           "/api/ebay/production/publish",
